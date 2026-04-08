@@ -92,10 +92,49 @@ public class RegistrationForm extends JFrame {
         String confirmPassword = new String(confirmPasswordField.getPassword());
         String fullName = fullNameField.getText();
 
-        // Default role is USER
-        String role = "USER";
+        try {
+            // Validate email format
+            if (email.trim().isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Email cannot be empty.");
+                return;
+            } else {
+                InputValidator.validateEmail(email);  // Validate email format
+            }
 
-        if (password.equals(confirmPassword)) {
+            // Validate full name format
+            if (fullName.trim().isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Full Name cannot be empty.");
+                return;
+            } else {
+                InputValidator.validateFullName(fullName); // Validate full name format
+            }
+
+            // Validate password
+            if (password.trim().isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Password cannot be empty.");
+                return;
+            }
+
+            // Validate confirm password
+            if (confirmPassword.trim().isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Confirm Password cannot be empty.");
+                return;
+            }
+
+            // Check if passwords match
+            if (!password.equals(confirmPassword)) {
+                JOptionPane.showMessageDialog(this, "Passwords do not match!");
+                return;
+            }
+
+            // Now, general check for empty fields (after format validation)
+            if (email.trim().isEmpty() || password.trim().isEmpty() || fullName.trim().isEmpty() || confirmPassword.trim().isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Please fill in all fields!");
+                return;
+            }
+
+
+
             // Insert the data into the database
             try (Connection conn = DatabaseConnection.getConnection()) {
                 String query = "INSERT INTO users (email, password, name, role) VALUES (?, ?, ?, ?)";
@@ -103,21 +142,23 @@ public class RegistrationForm extends JFrame {
                 pst.setString(1, email);
                 pst.setString(2, password);  // Better to hash the password before storing it
                 pst.setString(3, fullName);
-                pst.setString(4, role);  // Default role for a new user is "USER"
+                pst.setString(4, "USER");  // Default role for a new user is "USER"
                 pst.executeUpdate();
                 JOptionPane.showMessageDialog(this, "Registration Successful!");
 
-                // Redirect to movie listing page after successful registration
-                new MovieListingPage().setVisible(true); // Show movie listing page
+                // Redirect to the login page after successful registration
+                new LoginForm().setVisible(true); // Show the login page
                 this.dispose(); // Close the current registration window
 
             } catch (SQLException ex) {
                 JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
             }
-        } else {
-            JOptionPane.showMessageDialog(this, "Passwords do not match!");
+        } catch (InvalidInputException ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage());
         }
     }
+
+
 
     public static void main(String[] args) {
         // Create and display the registration form
