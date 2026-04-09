@@ -1,66 +1,64 @@
 package cinema;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.event.*;
+import java.io.File;
 import java.sql.*;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
-import java.io.File; // Import the File class
 
 public class MovieListingPage extends JFrame {
+
     private JPanel moviePanel;
 
+    private static final Color NAV_BAR_COLOR = new Color(18, 18, 18);
+    private static final Color PRIMARY_BLUE = new Color(34, 150, 243);
+    private static final Font TITLE_FONT = new Font("Arial", Font.BOLD, 20);
+    private static final Font BODY_FONT = new Font("Arial", Font.PLAIN, 14);
+
     public MovieListingPage() {
-        // Set the window title and basic settings
         setTitle("Movie Listings");
         setLayout(new BorderLayout());
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        // Initialize the movie panel
-        moviePanel = new JPanel();
-        moviePanel.setLayout(new GridLayout(0, 1, 10, 10));  // Grid layout with space between rows
+        moviePanel = new JPanel(new GridLayout(0, 1, 10, 10));
         moviePanel.setBackground(Color.WHITE);
 
-        // Scrollable area for the movie panel (if there are too many movies)
         JScrollPane scrollPane = new JScrollPane(moviePanel);
         add(scrollPane, BorderLayout.CENTER);
 
-        // Fetch all movies from the database
         List<Movie> movies = getAllMovies();
-
-        // Display movies in the panel
         for (Movie movie : movies) {
-            JPanel movieCard = createMovieCard(movie);
-            moviePanel.add(movieCard);
+            moviePanel.add(createMovieCard(movie));
         }
 
-        // Window settings
-        setSize(1000, 750);
-        setLocationRelativeTo(null);  // Center the window
+        addLogoutButton();
+
+        setSize(1000, 800);
+        setLocationRelativeTo(null);
     }
 
-    // Fetch all movies from the database
+    // ================= DATABASE =================
     private List<Movie> getAllMovies() {
         List<Movie> movies = new ArrayList<>();
 
-        try (Connection conn = DatabaseConnection.getConnection()) {
-            String query = "SELECT * FROM movies";  // Fetching all movies
-            PreparedStatement pst = conn.prepareStatement(query);
-            ResultSet rs = pst.executeQuery();
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pst = conn.prepareStatement("SELECT * FROM movies");
+             ResultSet rs = pst.executeQuery()) {
 
             while (rs.next()) {
-                // Create movie objects from the data
-                int id = rs.getInt("id");
-                String title = rs.getString("title");
-                String description = rs.getString("description");
-                int duration = rs.getInt("duration_minutes");
-                double rating = rs.getDouble("rating");
-                String releaseDate = rs.getString("release_date");
-                String imagePath = rs.getString("image_path"); // Get image path
-
-                movies.add(new Movie(id, title, description, duration, rating, releaseDate, imagePath));
+                movies.add(new Movie(
+                        rs.getInt("id"),
+                        rs.getString("title"),
+                        rs.getString("description"),
+                        rs.getInt("duration_minutes"),
+                        rs.getDouble("rating"),
+                        rs.getString("release_date"),
+                        rs.getString("image_path")
+                ));
             }
+
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
         }
@@ -68,118 +66,134 @@ public class MovieListingPage extends JFrame {
         return movies;
     }
 
+    // ================= MOVIE CARD =================
     private JPanel createMovieCard(Movie movie) {
-        JPanel card = new JPanel();
-        card.setLayout(new BorderLayout());
-        card.setBackground(new Color(245, 245, 245));  // Light gray background
-        card.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
+        JPanel card = new JPanel(new BorderLayout());
+        card.setBackground(new Color(245, 245, 245));
+        card.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // Movie Title
-        JLabel titleLabel = new JLabel(movie.getTitle(), JLabel.CENTER);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 20));
-
-        // Movie Description (truncated if too long)
-        JTextArea descriptionArea = new JTextArea(movie.getDescription());
-        descriptionArea.setWrapStyleWord(true);
-        descriptionArea.setLineWrap(true);
-        descriptionArea.setEditable(false);
-        descriptionArea.setFont(new Font("Arial", Font.PLAIN, 14));
-        descriptionArea.setPreferredSize(new Dimension(600, 80));  // Limit description area size
-
-        // Movie Duration, Rating, and Release Date
-        JPanel detailsPanel = new JPanel();
-        detailsPanel.setLayout(new GridLayout(1, 3));  // 3 columns: duration, rating, release date
-
-        JLabel durationLabel = new JLabel("Duration: " + movie.getDuration() + " min");
-        JLabel ratingLabel = new JLabel("Rating: " + movie.getRating());
-        JLabel releaseDateLabel = new JLabel("Released: " + movie.getReleaseDate());
-
-        detailsPanel.add(durationLabel);
-        detailsPanel.add(ratingLabel);
-        detailsPanel.add(releaseDateLabel);
-
-        // Movie Poster
-        ImageIcon moviePoster = null;
-
-        // Check if the image path is not null
-        if (movie.getImagePath() != null && !movie.getImagePath().isEmpty()) {
-            // Use the full path to the image
-            File imageFile = new File("images/" + movie.getImagePath());
-            if (imageFile.exists()) {
-                // Load the image and scale it to desired size
-               // System.out.println("Image exists: " + imageFile.getAbsolutePath());
-                Image img = new ImageIcon(imageFile.getAbsolutePath()).getImage();
-                Image scaledImg = img.getScaledInstance(200, 225, Image.SCALE_SMOOTH); // Resize image to 200x225 pixels
-                moviePoster = new ImageIcon(scaledImg);
-            } else {
-                System.out.println("Image not found: " + imageFile.getAbsolutePath());
-                // If the image is not found, use a default image and scale it
-                Image img = new ImageIcon("images/default.jpg").getImage();
-                Image scaledImg = img.getScaledInstance(200, 225, Image.SCALE_SMOOTH); // Resize default image to 200x225 pixels
-                moviePoster = new ImageIcon(scaledImg);
-            }
-        } else {
-            // Use a default image if the movie has no image path and scale it
-            Image img = new ImageIcon("images/default.jpg").getImage();
-            Image scaledImg = img.getScaledInstance(200, 225, Image.SCALE_SMOOTH); // Resize default image to 200x225 pixels
-            moviePoster = new ImageIcon(scaledImg);
-        }
-
-        JLabel posterLabel = new JLabel(moviePoster);
-        posterLabel.setPreferredSize(new Dimension(200, 225));  // Set size for the poster image
-
-        // "Watch Showtimes" button
-        JButton playButton = new JButton("Watch Showtimes");
-        playButton.setFont(new Font("Arial", Font.BOLD, 16));
-        playButton.setBackground(new Color(34, 150, 243));  // Blue button color
-        playButton.setForeground(Color.WHITE);
-        playButton.setFocusPainted(false);
-        playButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                openShowtimesPage(movie.getId());
-                System.out.println("The WatchShowtimesPage executed successfully");
-
-            }
-        });
-
-        // Putting all components together into the movie card
-        JPanel cardPanel = new JPanel();
-        cardPanel.setLayout(new BorderLayout());
-
-        // Adding image, title, and description in the card
-        cardPanel.add(posterLabel, BorderLayout.WEST);
-        cardPanel.add(titleLabel, BorderLayout.NORTH);
-        cardPanel.add(new JScrollPane(descriptionArea), BorderLayout.CENTER);  // Add description with scroll
-        cardPanel.add(detailsPanel, BorderLayout.SOUTH);
-        cardPanel.add(playButton, BorderLayout.EAST);  // Play button at the side
-
-        card.add(cardPanel, BorderLayout.CENTER);
+        card.add(createPoster(movie), BorderLayout.WEST);
+        card.add(createDetails(movie), BorderLayout.CENTER);
+        card.add(createButtonPanel(movie), BorderLayout.EAST);
 
         return card;
     }
 
-    // Simulate watching the movie
-    private void watchMovie(Movie movie) {
-        JOptionPane.showMessageDialog(this, "Now playing: " + movie.getTitle());
-        // You can open a new window or integrate a video player here
+    // ================= POSTER =================
+    private JLabel createPoster(Movie movie) {
+        String path = "images/" + (movie.getImagePath() == null ? "default.jpg" : movie.getImagePath());
+        File file = new File(path);
+        String finalPath = file.exists() ? path : "images/default.jpg";
+
+        Image img = new ImageIcon(finalPath).getImage();
+        ImageIcon icon = new ImageIcon(img.getScaledInstance(150, 225, Image.SCALE_SMOOTH));
+
+        return new JLabel(icon);
     }
 
-    // Method to open the Watch Showtimes page
+    // ================= DETAILS =================
+    private JPanel createDetails(Movie movie) {
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBorder(BorderFactory.createEmptyBorder(0, 15, 0, 15));
+        panel.setOpaque(false);
+
+        panel.add(createTitle(movie));
+        panel.add(Box.createRigidArea(new Dimension(0, 5)));
+        panel.add(createDescription(movie));
+        panel.add(createMetaData(movie));
+
+        return panel;
+    }
+
+    private JLabel createTitle(Movie movie) {
+        JLabel label = new JLabel(movie.getTitle());
+        label.setFont(TITLE_FONT);
+        label.setAlignmentX(Component.LEFT_ALIGNMENT);
+        return label;
+    }
+
+    private JScrollPane createDescription(Movie movie) {
+        JTextArea area = new JTextArea(movie.getDescription());
+        area.setWrapStyleWord(true);
+        area.setLineWrap(true);
+        area.setEditable(false);
+        area.setOpaque(false);
+        area.setFont(BODY_FONT);
+
+        JScrollPane scroll = new JScrollPane(area);
+        scroll.setPreferredSize(new Dimension(400, 60));
+        scroll.setAlignmentX(Component.LEFT_ALIGNMENT);
+        scroll.setBorder(null);
+
+        return scroll;
+    }
+
+    private JPanel createMetaData(Movie movie) {
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 10));
+        panel.setOpaque(false);
+        panel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        panel.add(new JLabel("🕒 " + movie.getDuration() + " min"));
+        panel.add(new JLabel("⭐ " + movie.getRating()));
+        panel.add(new JLabel("📅 " + movie.getReleaseDate()));
+
+        return panel;
+    }
+
+    // ================= BUTTON =================
+    private JPanel createButtonPanel(Movie movie) {
+        JButton button = new JButton("Watch Showtimes");
+        button.setPreferredSize(new Dimension(180, 200));
+        button.setBackground(PRIMARY_BLUE);
+        button.setForeground(Color.WHITE);
+        button.setFocusPainted(false);
+
+        button.addActionListener(e -> openShowtimesPage(movie.getId()));
+
+        JPanel wrapper = new JPanel(new GridBagLayout());
+        wrapper.add(button);
+
+        return wrapper;
+    }
+
+    // ================= NAVIGATION =================
     private void openShowtimesPage(int movieId) {
-        new WatchShowtimesPage(movieId).setVisible(true);  // Show the Watch Showtimes page
-        this.dispose(); // Optionally close the current movie listing page
-        System.out.println("WENT BACK TO Showtimes PAGE successfully");
+        new WatchShowtimesPage(movieId).setVisible(true);
+        this.dispose();
     }
 
+    private void addLogoutButton() {
+        JButton logoutButton = new JButton("← Logout");
+        logoutButton.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        logoutButton.setForeground(Color.WHITE);
+        logoutButton.setBackground(NAV_BAR_COLOR);
+        logoutButton.setFocusPainted(false);
+        logoutButton.setBorderPainted(false);
+        logoutButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        logoutButton.addActionListener(e -> logout());
+
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.setBackground(NAV_BAR_COLOR);
+        topPanel.setPreferredSize(new Dimension(getWidth(), 45));
+        topPanel.setBorder(new EmptyBorder(0, 20, 0, 20));
+        topPanel.add(logoutButton, BorderLayout.WEST);
+
+        add(topPanel, BorderLayout.NORTH);
+    }
+
+    private void logout() {
+        UserSession.logout();
+        JOptionPane.showMessageDialog(this, "You have been logged out.");
+        new LoginForm().setVisible(true);
+        this.dispose();
+    }
+
+    // ================= MAIN =================
     public static void main(String[] args) {
-        // Display movie listings
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                new MovieListingPage().setVisible(true);
-                System.out.println("The MovieListingPage executed successfully");
-            }
+        SwingUtilities.invokeLater(() -> {
+            new MovieListingPage().setVisible(true);
         });
     }
 }
