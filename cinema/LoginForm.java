@@ -99,12 +99,11 @@ public class LoginForm extends JFrame {
 
             // If a user is found
             if (rs.next()) {
-                // Get the user's ID and role
+                // Set the user ID in the session
                 int userId = rs.getInt("id");
-                String role = rs.getString("role");
+                UserSession.setUserId(userId);  // This ensures the user is logged in
 
-                // Store the user ID in the session
-                UserSession.setUserId(userId);
+                String role = rs.getString("role");
 
                 // Redirect to movie listing page after successful login
                 new MovieListingPage().setVisible(true); // Show movie listing page
@@ -127,10 +126,14 @@ public class LoginForm extends JFrame {
         }
     }
 
+
     private void openAdminPanel() {
-        // This function should open the admin panel
-        JOptionPane.showMessageDialog(this, "Welcome, Admin!");
-        // You can create a new JFrame or open a new window for the admin
+        // Open the admin panel when login is successful
+        JOptionPane.showMessageDialog(this, "Welcome, ADMIN!");
+        AdminPanel adminPanel = new AdminPanel();
+        adminPanel.setVisible(true);  // Make the AdminPanel visible
+
+        this.dispose();  // Close the current login window
     }
 
     private void openUserPanel() {
