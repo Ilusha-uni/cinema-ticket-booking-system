@@ -98,7 +98,7 @@ public class RegistrationForm extends JFrame {
                 JOptionPane.showMessageDialog(this, "Email cannot be empty.");
                 return;
             } else {
-                InputValidator.validateEmail(email);  // Validate email format
+                InputValidator.validateEmail(email, 0);  // Validate email format
             }
 
             // Validate full name format

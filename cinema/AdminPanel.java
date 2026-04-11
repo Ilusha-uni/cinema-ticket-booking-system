@@ -17,7 +17,6 @@ public class AdminPanel extends JFrame {
         // Create a JTabbedPane to hold the tabs (each panel will be a tab)
         JTabbedPane tabbedPane = new JTabbedPane();
 
-        // Add tabs for each section of the admin panel
         tabbedPane.addTab("Users", new UsersPanel());
 
         // Add the tabbedPane to the frame

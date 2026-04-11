@@ -4,7 +4,7 @@ import java.util.Date;
 
 import java.sql.*;
 
-public class InputValidator {
+public class InputValidator extends Exception{
 
     // Validate if a string can be parsed as a positive integer
     public static void validatePositiveInteger(String input) throws InvalidInputException {
@@ -30,17 +30,34 @@ public class InputValidator {
         }
     }
 
-    // Validate email format (using regex)
-    public static void validateEmail(String email) throws InvalidInputException {
+    // Validate email format (using regex) and check if email is already taken
+    public static void validateEmail(String email, int userId) throws InvalidInputException {
         String emailRegex = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
         if (!email.matches(emailRegex)) {
             throw new InvalidInputException("Invalid email format. Please enter a valid email address.");
         }
 
-        // Check if the email already exists in the database
-        if (isEmailTaken(email)) {
+        // Check if the email already exists in the database, excluding the current user's email
+        if (isEmailTaken(email, userId)) {
             throw new InvalidInputException("This email is already registered.");
         }
+    }
+
+    // Method to check if the email already exists in the database (excluding the current user's email)
+    private static boolean isEmailTaken(String email, int userId) throws InvalidInputException {
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            String query = "SELECT COUNT(*) FROM users WHERE email = ? AND id != ?";
+            PreparedStatement pst = conn.prepareStatement(query);
+            pst.setString(1, email);
+            pst.setInt(2, userId);  // Exclude the current user's email
+            ResultSet rs = pst.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1) > 0;  // If count > 0, email already exists
+            }
+        } catch (SQLException ex) {
+            throw new InvalidInputException("Database error: " + ex.getMessage());
+        }
+        return false;
     }
 
     // Validate if the field is not empty
@@ -70,19 +87,15 @@ public class InputValidator {
         }
     }
 
-    // Method to check if the email already exists in the database
-    private static boolean isEmailTaken(String email) {
-        try (Connection conn = DatabaseConnection.getConnection()) {
-            String query = "SELECT COUNT(*) FROM users WHERE email = ?";
-            PreparedStatement pst = conn.prepareStatement(query);
-            pst.setString(1, email);
-            ResultSet rs = pst.executeQuery();
-            if (rs.next()) {
-                return rs.getInt(1) > 0;  // If count > 0, email already exists
-            }
-        } catch (SQLException ex) {
-            throw new RuntimeException("Database error: " + ex.getMessage());
+
+
+    // Method to validate role (must be either "ADMIN" or "USER")
+    public static void validateRole(String role) throws InvalidInputException {
+        if (!(role.equals("ADMIN") || role.equals("USER"))) {
+            throw new InvalidInputException("Role must be either ADMIN or USER.");
         }
-        return false;
     }
+
+
+
 }

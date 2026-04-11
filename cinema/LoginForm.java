@@ -61,7 +61,7 @@ public class LoginForm extends JFrame {
         mainPanel.add(loginButton, gbc);
 
         // Add "Register" link to go to the registration form
-        JLabel registerLabel = new JLabel("<HTML><U>Don't have an account? Register here</U></HTML>");
+        JLabel registerLabel = new JLabel("Don't have an account? Register here");
         registerLabel.setForeground(Color.BLUE);
         registerLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         registerLabel.addMouseListener(new MouseAdapter()   {
