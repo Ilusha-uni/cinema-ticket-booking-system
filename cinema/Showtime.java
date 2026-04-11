@@ -1,5 +1,5 @@
 // Package declaration
-package cinema
+package cinema;
 
 // Represents a movie showing in a hall at a specific time
 public class Showtime {
