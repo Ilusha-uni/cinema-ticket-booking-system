@@ -4,34 +4,33 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-// Utility class to manage database connections
 public class DatabaseConnection {
 
-    // Database connection parameters
-    private static final String URL = "jdbc:mysql://localhost:3306/cinema_db"; // DB URL
-    private static final String USER = "cinemadb"; // DB username
-    private static final String PASSWORD = "yourpassword"; // DB password
+    // Connection parameters
+    private static final String URL = "jdbc:mysql://localhost:3306/cinema_db";
+    private static final String USER = "cinemadb"; // replace with your username
+    private static final String PASSWORD = "b=dRn:iFr$?1G!zX.YqEF-745t+1suq&0oC$@"; // replace with your password
 
-    // Get a connection to the database
+    // Method to get a connection to the database
     public static Connection getConnection() throws SQLException {
         try {
-            // Connect to DB
+            //System.out.println("Attempting to connect to MySQL...");
+            // Connecting to the database
             Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+            //System.out.println("Successfully connected to MySQL!");
             return conn;
         } catch (SQLException ex) {
-            // Handle connection error
             System.err.println("Database connection error: " + ex.getMessage());
-            ex.printStackTrace(); // Print full stack trace
+            ex.printStackTrace(); // Prints the full stack trace of the error
             throw ex;
         }
     }
 
-    // Test DB connection
     public static void main(String[] args) {
         try {
-            getConnection(); // Attempt connection
+            getConnection(); // Trying to connect
         } catch (SQLException e) {
-            // Connection failed
+            // Handling connection error
         }
     }
 }
