@@ -18,6 +18,7 @@ public class AdminPanel extends JFrame {
         JTabbedPane tabbedPane = new JTabbedPane();
 
         tabbedPane.addTab("Users", new UsersPanel());
+     
 
         // Add the tabbedPane to the frame
         add(tabbedPane, BorderLayout.CENTER);  // Main content in the center

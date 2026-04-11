@@ -2,8 +2,8 @@ package cinema;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.TitledBorder;
 import java.awt.*;
+import java.io.File;
 import java.util.List;
 import java.sql.*;
 
@@ -25,160 +25,130 @@ public class BookingConfirmationPage extends JFrame {
         this.hallId = hallId;
         this.screeningId = screeningId;
 
-        setTitle("Booking Confirmation");
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setTitle("Confirm Booking");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setSize(1300, 800);
+        setLocationRelativeTo(null);
         setLayout(new BorderLayout());
 
-        // Main content panel
-        JPanel contentPanel = new JPanel(new GridBagLayout());
-        contentPanel.setBackground(Color.WHITE);
-        contentPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(10, 10, 10, 10);
-        gbc.fill = GridBagConstraints.BOTH;
+        // --- TOP NAV BAR ---
+        JPanel topBar = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        topBar.setBackground(Color.BLACK);
 
-        // 1. Movie Section
-        gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 2; gbc.weightx = 1.0;
-        contentPanel.add(createMoviePanel(), gbc);
+        JButton backBtn = new JButton("← Back");
+        backBtn.setForeground(Color.WHITE);
+        backBtn.setBackground(Color.BLACK);
+        backBtn.setBorderPainted(false);
+        backBtn.setFocusPainted(false);
+        backBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        backBtn.addActionListener(e -> goBackToSeats());
 
-        // 2. Showtime Details
-        gbc.gridx = 0; gbc.gridy = 1; gbc.gridwidth = 1; gbc.weightx = 0.5;
-        contentPanel.add(createShowtimePanel(), gbc);
+        topBar.add(backBtn);
+        add(topBar, BorderLayout.NORTH);
 
-        // 3. Selected Seats List
-        gbc.gridx = 1; gbc.gridy = 1;
-        contentPanel.add(createSeatsPanel(), gbc);
+        // --- MAIN CONTENT ---
+        JPanel content = new JPanel();
+        content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
+        content.setBorder(new EmptyBorder(20, 30, 20, 30));
+        content.setBackground(Color.WHITE);
 
-        // 4. Confirm Button
-        JButton confirmBtn = new JButton("Confirm & Pay €" + String.format("%.2f", totalPrice));
-        confirmBtn.setFont(new Font("Arial", Font.BOLD, 18));
-        confirmBtn.setBackground(new Color(34, 150, 243));
+        // Poster Image
+        JLabel posterLabel = new JLabel();
+        posterLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        try {
+            String path = "images/" + (movie.getImagePath() == null ? "default.jpg" : movie.getImagePath());
+            if (new File(path).exists()) {
+                ImageIcon icon = new ImageIcon(new ImageIcon(path).getImage().getScaledInstance(180, 260, Image.SCALE_SMOOTH));
+                posterLabel.setIcon(icon);
+            } else {
+                posterLabel.setText("[Poster Not Found]");
+            }
+        } catch (Exception e) { posterLabel.setText("[Image Error]"); }
+
+        // Labels
+        JLabel title = createLabel(movie.getTitle(), new Font("SansSerif", Font.BOLD, 28), Color.BLACK);
+        JLabel info = createLabel(showtime.getStartTime() + " | Seats: " + String.join(", ", selectedSeats),
+                new Font("SansSerif", Font.PLAIN, 22), Color.DARK_GRAY);
+        JLabel price = createLabel("Total: €" + String.format("%.2f", totalPrice),
+                new Font("SansSerif", Font.BOLD, 26), new Color(34, 150, 243));
+
+        // Confirm Button
+        JButton confirmBtn = new JButton("Confirm & Pay Now");
+        confirmBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
+        confirmBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
+        confirmBtn.setBackground(new Color(46, 204, 113));
         confirmBtn.setForeground(Color.WHITE);
+        confirmBtn.setFont(new Font("SansSerif", Font.BOLD, 20));
+        confirmBtn.setFocusPainted(false);
         confirmBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         confirmBtn.addActionListener(e -> confirmBooking());
 
-        gbc.gridx = 0; gbc.gridy = 2; gbc.gridwidth = 2;
-        contentPanel.add(confirmBtn, gbc);
+        // Assembly
+        content.add(posterLabel);
+        content.add(Box.createVerticalStrut(15));
+        content.add(title);
+        content.add(info);
+        content.add(Box.createVerticalStrut(20));
+        content.add(price);
+        content.add(Box.createVerticalStrut(25));
+        content.add(confirmBtn);
 
-        // 5. Back Button
-        JButton backBtn = new JButton("Back to Seats");
-        backBtn.setBackground(new Color(200, 0, 0));
-        backBtn.setForeground(Color.WHITE);
-        backBtn.addActionListener(e -> goBackToSeats());
-        gbc.gridy = 3;
-        contentPanel.add(backBtn, gbc);
+        add(new JScrollPane(content), BorderLayout.CENTER);
+    }
 
-        add(new JScrollPane(contentPanel), BorderLayout.CENTER);
-        setSize(850, 650);
-        setLocationRelativeTo(null);
+    private JLabel createLabel(String text, Font font, Color color) {
+        JLabel l = new JLabel(text);
+        l.setFont(font);
+        l.setForeground(color);
+        l.setAlignmentX(Component.CENTER_ALIGNMENT);
+        l.setBorder(new EmptyBorder(5, 0, 5, 0));
+        return l;
     }
 
     private void confirmBooking() {
-        int userId = UserSession.getUserId();
-        System.out.println("Logged-in User ID: " + userId); // Debugging the logged-in user ID
         if (!UserSession.isLoggedIn()) {
-            JOptionPane.showMessageDialog(this, "You must be logged in to book tickets.");
+            JOptionPane.showMessageDialog(this, "Please log in to continue.");
             return;
         }
 
-        int response = JOptionPane.showConfirmDialog(this, "Process payment for " + selectedSeats.size() + " seats?", "Final Step", JOptionPane.YES_NO_OPTION);
-        if (response != JOptionPane.YES_OPTION) return;
-
-
+        int choice = JOptionPane.showConfirmDialog(this, "Confirm payment?", "Payment", JOptionPane.YES_NO_OPTION);
+        if (choice != JOptionPane.YES_OPTION) return;
 
         try (Connection conn = DatabaseConnection.getConnection()) {
-            // STEP 1: Check if any seat was booked while the user was on this page
+            // Check availability
             String checkSQL = "SELECT COUNT(*) FROM tickets WHERE screening_id = ? AND seat_id = ? AND status = 'BOOKED'";
             try (PreparedStatement checkStmt = conn.prepareStatement(checkSQL)) {
-                for (int seatId : selectedSeatIds) {
+                for (int sid : selectedSeatIds) {
                     checkStmt.setInt(1, showtime.getId());
-                    checkStmt.setInt(2, seatId);
+                    checkStmt.setInt(2, sid);
                     ResultSet rs = checkStmt.executeQuery();
                     if (rs.next() && rs.getInt(1) > 0) {
-                        JOptionPane.showMessageDialog(this, "Sorry, one of your selected seats has just been taken. Please choose another one.");
+                        JOptionPane.showMessageDialog(this, "One of your seats was just taken!");
                         return;
                     }
                 }
             }
 
-            // STEP 2: Perform the booking (INSERT)
+            // Insert Booking
             String insertSQL = "INSERT INTO tickets (user_id, screening_id, seat_id, status) VALUES (?, ?, ?, 'BOOKED')";
             try (PreparedStatement insertStmt = conn.prepareStatement(insertSQL)) {
-                for (int seatId : selectedSeatIds) {
-                    insertStmt.setInt(1, userId);
+                for (int sid : selectedSeatIds) {
+                    insertStmt.setInt(1, UserSession.getUserId());
                     insertStmt.setInt(2, showtime.getId());
-                    insertStmt.setInt(3, seatId);
-                    insertStmt.addBatch();
+                    insertStmt.setInt(3, sid);
+
+                    insertStmt.executeUpdate();
                 }
-                insertStmt.executeBatch();
-                JOptionPane.showMessageDialog(this, "Booking Successful!");
+                JOptionPane.showMessageDialog(this, "Booking Confirmed! Enjoy your movie!");
                 this.dispose();
             }
-
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(this, "Database Error: " + ex.getMessage());
-            ex.printStackTrace();
         }
     }
 
     private void goBackToSeats() {
         new SeatSelectionPage(hallId, movie.getId(), screeningId, selectedSeats).setVisible(true);
         this.dispose();
-    }
-
-    private JPanel createMoviePanel() {
-        JPanel panel = new JPanel(new BorderLayout(20, 0));
-        panel.setBackground(Color.WHITE);
-        JLabel posterLabel = new JLabel(loadImage(movie.getImagePath()));
-        panel.add(posterLabel, BorderLayout.WEST);
-
-        JPanel textPanel = new JPanel(new GridLayout(0, 1, 0, 5));
-        textPanel.setBackground(Color.WHITE);
-        JLabel title = new JLabel(movie.getTitle());
-        title.setFont(new Font("Serif", Font.BOLD, 28));
-        JTextArea desc = new JTextArea(movie.getDescription());
-        desc.setLineWrap(true); desc.setWrapStyleWord(true); desc.setEditable(false);
-        textPanel.add(title);
-        textPanel.add(new JScrollPane(desc));
-        panel.add(textPanel, BorderLayout.CENTER);
-        return panel;
-    }
-
-    private ImageIcon loadImage(String path) {
-        String fullPath = "images/" + (path == null || path.isEmpty() ? "default.jpg" : path);
-        ImageIcon icon = new ImageIcon(fullPath);
-        Image img = icon.getImage().getScaledInstance(180, 260, Image.SCALE_SMOOTH);
-        return new ImageIcon(img);
-    }
-
-    private JPanel createShowtimePanel() {
-        JPanel panel = new JPanel(new GridLayout(3, 1));
-        panel.setBackground(Color.WHITE);
-        panel.setBorder(BorderFactory.createTitledBorder("Show Details"));
-        panel.add(new JLabel(" Time: " + showtime.getStartTime()));
-        panel.add(new JLabel(" Unit Price: €" + showtime.getPrice()));
-        panel.add(new JLabel(" Duration: " + movie.getDuration() + " mins"));
-        return panel;
-    }
-
-    private JPanel createSeatsPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(Color.WHITE);
-        panel.setBorder(BorderFactory.createTitledBorder("Your Selection"));
-        JList<String> seatList = new JList<>(selectedSeats.toArray(new String[0]));
-        panel.add(new JScrollPane(seatList), BorderLayout.CENTER);
-        JLabel totalLabel = new JLabel("TOTAL: €" + String.format("%.2f", totalPrice), SwingConstants.RIGHT);
-        totalLabel.setFont(new Font("Arial", Font.BOLD, 16));
-        panel.add(totalLabel, BorderLayout.SOUTH);
-        return panel;
-    }
-
-
-
-private void logout() {
-        UserSession.logout();
-        JOptionPane.showMessageDialog(this, "You have been logged out.");
-        new LoginForm().setVisible(true);  // Redirect back to login screen
-        this.dispose(); // Close the current window
     }
 }

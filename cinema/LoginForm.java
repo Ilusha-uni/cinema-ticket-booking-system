@@ -6,119 +6,89 @@ import java.awt.event.*;
 import java.sql.*;
 
 public class LoginForm extends JFrame {
-    private JTextField emailField;
-    private JPasswordField passwordField;
+    private JTextField emailField = new JTextField(20);
+    private JPasswordField passwordField = new JPasswordField(20);
 
     public LoginForm() {
-        // Set the window title
         setTitle("Login");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLayout(new GridBagLayout()); // Used only to center the content panel
+        getContentPane().setBackground(Color.WHITE);
 
-        // Set up the main panel with GridBagLayout for flexible positioning
-        JPanel mainPanel = new JPanel();
-        mainPanel.setLayout(new GridBagLayout());  // Use GridBagLayout for flexible positioning
-        mainPanel.setBackground(Color.WHITE);
+        // Create a central panel for the form fields
+        JPanel formPanel = new JPanel(new GridLayout(4, 1, 10, 10));
+        formPanel.setBackground(Color.WHITE);
 
-        // GridBag constraints object to control component positioning
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(10, 10, 10, 10);  // Add some space around each component
-        gbc.anchor = GridBagConstraints.WEST;  // Align components to the left
+        // Email Section
+        formPanel.add(new JLabel("Email:"));
+        formPanel.add(emailField);
 
-        // Create email field
-        JLabel emailLabel = new JLabel("Email:");
-        emailField = new JTextField(20);
-        gbc.gridx = 0; // Set column position
-        gbc.gridy = 0; // Set row position
-        mainPanel.add(emailLabel, gbc);
-        gbc.gridx = 1;  // Move to the next column
-        mainPanel.add(emailField, gbc);
+        // Password Section
+        formPanel.add(new JLabel("Password:"));
+        formPanel.add(passwordField);
 
-        // Create password field
-        JLabel passwordLabel = new JLabel("Password:");
-        passwordField = new JPasswordField(20);
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        mainPanel.add(passwordLabel, gbc);
-        gbc.gridx = 1;
-        mainPanel.add(passwordField, gbc);
-
-        // Create login button
+        // Login Button
         JButton loginButton = new JButton("Login");
-        loginButton.setFont(new Font("Arial", Font.BOLD, 16));
-        loginButton.setBackground(new Color(34, 150, 243)); // Button color
-        loginButton.setForeground(Color.WHITE);
-        loginButton.setFocusPainted(false);
-        loginButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                loginUser();
-            }
-        });
+        styleButton(loginButton);
+        loginButton.addActionListener(e -> loginUser());
 
-        // Add login button to the layout with GridBagLayout constraints
-        gbc.gridx = 1;
-        gbc.gridy = 2;  // Place button below the password field
-        mainPanel.add(loginButton, gbc);
-
-        // Add "Register" link to go to the registration form
-        JLabel registerLabel = new JLabel("Don't have an account? Register here");
+        // Register Link
+        JLabel registerLabel = new JLabel("Don't have an account? Register here", SwingConstants.CENTER);
         registerLabel.setForeground(Color.BLUE);
         registerLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        registerLabel.addMouseListener(new MouseAdapter()   {
-            @Override
+        registerLabel.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
-                // Navigate to the Registration Form
                 new RegistrationForm().setVisible(true);
-                dispose();  // Close the current login form
+                dispose();
             }
         });
 
-        // Add register label to the layout
-        gbc.gridx = 1;
-        gbc.gridy = 3;  // Place below the login button
-        mainPanel.add(registerLabel, gbc);
+        // Add components to frame
+        JPanel container = new JPanel(new BorderLayout(10, 10));
+        container.setBackground(Color.WHITE);
+        container.add(formPanel, BorderLayout.CENTER);
+        container.add(loginButton, BorderLayout.SOUTH);
 
-        // Add the main panel to the window
-        this.add(mainPanel);
-        this.setSize(400, 300);
-        this.setLocationRelativeTo(null);  // Center the window on the screen
+        // Wrap everything to add the register link at the very bottom
+        JPanel finalWrapper = new JPanel(new BorderLayout(10, 20));
+        finalWrapper.setBackground(Color.WHITE);
+        finalWrapper.add(container, BorderLayout.CENTER);
+        finalWrapper.add(registerLabel, BorderLayout.SOUTH);
+
+        add(finalWrapper);
+        setSize(500, 450);
+        setLocationRelativeTo(null);
+    }
+
+    private void styleButton(JButton btn) {
+        btn.setFont(new Font("Arial", Font.BOLD, 16));
+        btn.setBackground(new Color(34, 150, 243));
+        btn.setForeground(Color.WHITE);
+        btn.setFocusPainted(false);
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
     }
 
     private void loginUser() {
-        // Retrieve the user input
         String email = emailField.getText();
         String password = new String(passwordField.getPassword());
 
         try (Connection conn = DatabaseConnection.getConnection()) {
-            // SQL query to fetch user details based on email and password
             String query = "SELECT * FROM users WHERE email = ? AND password = ?";
             PreparedStatement pst = conn.prepareStatement(query);
             pst.setString(1, email);
             pst.setString(2, password);
             ResultSet rs = pst.executeQuery();
 
-            // If a user is found
             if (rs.next()) {
-                // Set the user ID in the session
-                int userId = rs.getInt("id");
-                UserSession.setUserId(userId);  // This ensures the user is logged in
-
+                UserSession.setUserId(rs.getInt("id"));
                 String role = rs.getString("role");
 
-                // Redirect to movie listing page after successful login
-                new MovieListingPage().setVisible(true); // Show movie listing page
-                this.dispose(); // Close the current login window
+                new MovieListingPage().setVisible(true);
+                this.dispose();
 
-                // If the user is an admin
-                if ("ADMIN".equals(role)) {
-                    // Open admin panel (could be another frame or window)
-                    openAdminPanel();
-                } else {
-                    // Open user panel (could be another frame or window)
-                    openUserPanel();
-                }
+                if ("ADMIN".equals(role)) openAdminPanel();
+                else openUserPanel();
             } else {
-                // Show an error if credentials are incorrect
                 JOptionPane.showMessageDialog(this, "Invalid email or password!");
             }
         } catch (SQLException ex) {
@@ -126,29 +96,17 @@ public class LoginForm extends JFrame {
         }
     }
 
-
     private void openAdminPanel() {
-        // Open the admin panel when login is successful
         JOptionPane.showMessageDialog(this, "Welcome, ADMIN!");
-        AdminPanel adminPanel = new AdminPanel();
-        adminPanel.setVisible(true);  // Make the AdminPanel visible
-
-        this.dispose();  // Close the current login window
+        new AdminPanel().setVisible(true);
+        this.dispose();
     }
 
     private void openUserPanel() {
-        // This function should open the user panel
         JOptionPane.showMessageDialog(this, "Welcome, User!");
-        // You can create a new JFrame or open a new window for the user
     }
 
     public static void main(String[] args) {
-        // Create and display the login form
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                new LoginForm().setVisible(true);
-            }
-        });
+        SwingUtilities.invokeLater(() -> new LoginForm().setVisible(true));
     }
 }

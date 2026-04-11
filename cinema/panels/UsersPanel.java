@@ -8,223 +8,135 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.sql.*;
-import java.util.regex.Pattern;
 
 public class UsersPanel extends JPanel {
+    private JTable table;
+    private DefaultTableModel model;
 
     public UsersPanel() {
         setLayout(new BorderLayout());
 
-        // Define the columns for the JTable, placing 'password' after 'email'
+        // Table Setup
         String[] columns = {"id", "name", "email", "password", "role"};
-        DefaultTableModel model = new DefaultTableModel(columns, 0);
-        JTable table = new JTable(model);
+        model = new DefaultTableModel(columns, 0);
+        table = new JTable(model);
 
-        // Create the buttons
-        JButton refresh = new JButton("Refresh");
+        // Buttons
+        JButton refreshBtn = new JButton("Refresh");
         JButton addBtn = new JButton("Add");
         JButton editBtn = new JButton("Edit");
         JButton deleteBtn = new JButton("Delete");
 
-        // Regular expression for validating email format
-        String emailRegex = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
-
-        // Refresh button action: loads the data from the database
-        refresh.addActionListener(e -> {
-            try (Connection conn = DatabaseConnection.getConnection();
-                 Statement stmt = conn.createStatement();
-                 ResultSet rs = stmt.executeQuery("SELECT * FROM users")) {
-
-                model.setRowCount(0);  // Clear the table
-
-                while (rs.next()) {
-                    model.addRow(new Object[]{
-                            rs.getInt("id"),
-                            rs.getString("name"),
-                            rs.getString("email"),
-                            rs.getString("password"),  // Password comes after email
-                            rs.getString("role")
-                    });
-                }
-
-            } catch (SQLException ex) {
-                JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
-            }
-        });
-
-        // Add button action: opens a dialog to add a new user
-        addBtn.addActionListener(e -> {
-            JTextField nameField = new JTextField();
-            JTextField emailField = new JTextField();
-            JTextField roleField = new JTextField();
-            JPasswordField passwordField = new JPasswordField();
-
-            Object[] fields = {
-                    "Name:", nameField,
-                    "Email:", emailField,
-                    "Password:", passwordField,
-                    "Role:", roleField
-            };
-
-            int option = JOptionPane.showConfirmDialog(this, fields, "Add User", JOptionPane.OK_CANCEL_OPTION);
-
-            if (option == JOptionPane.OK_OPTION) {
-                String name = nameField.getText().trim();
-                String email = emailField.getText().trim();
-                String password = new String(passwordField.getPassword()).trim();
-                String role = roleField.getText().trim();
-
-                try {
-                    // Perform validation using InputValidator methods
-                    InputValidator.validateNonEmpty(name, "Name");
-                    InputValidator.validateNonEmpty(email, "Email");
-                    InputValidator.validateNonEmpty(password, "Password");
-                    InputValidator.validateNonEmpty(role, "Role");
-                    InputValidator.validateEmail(email, 0);  // Validate email format and uniqueness (userId = 0 for add)
-                    InputValidator.validateFullName(name);  // Validate full name format
-                    InputValidator.validateRole(role);  // Validate role
-
-                } catch (InvalidInputException ex) {
-                    JOptionPane.showMessageDialog(this, ex.getMessage());
-                    return;
-                }
-
-                int confirm = JOptionPane.showConfirmDialog(this,
-                        "Are you sure you want to add this user?", "Confirm Add", JOptionPane.YES_NO_OPTION);
-
-                if (confirm == JOptionPane.YES_OPTION) {
-                    try (Connection conn = DatabaseConnection.getConnection()) {
-                        String sql = "INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)";
-                        PreparedStatement pst = conn.prepareStatement(sql);
-                        pst.setString(1, name);
-                        pst.setString(2, email);
-                        pst.setString(3, password);  // Store password
-                        pst.setString(4, role);
-
-                        pst.executeUpdate();
-                        JOptionPane.showMessageDialog(this, "User added successfully!");
-                        refresh.doClick();  // Refresh the table
-                    } catch (SQLException ex) {
-                        JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
-                    }
-                }
-            }
-        });
-
-        // Edit button action: opens a dialog to edit an existing user
+        // Action Listeners
+        refreshBtn.addActionListener(e -> loadData());
+        addBtn.addActionListener(e -> showUserDialog(null));
         editBtn.addActionListener(e -> {
             int row = table.getSelectedRow();
-            if (row == -1) {
-                JOptionPane.showMessageDialog(this, "Select a row to edit");
-                return;
-            }
-
-            int id = (int) model.getValueAt(row, 0);
-            String name = (String) model.getValueAt(row, 1);
-            String email = (String) model.getValueAt(row, 2);
-            String password = (String) model.getValueAt(row, 3);  // Get password from table
-            String role = (String) model.getValueAt(row, 4);
-
-            JTextField nameField = new JTextField(name);
-            JTextField emailField = new JTextField(email);
-            JPasswordField passwordField = new JPasswordField(password);
-            JTextField roleField = new JTextField(role);
-
-            Object[] fields = {
-                    "Name:", nameField,
-                    "Email:", emailField,
-                    "Password:", passwordField,
-                    "Role:", roleField
-            };
-
-            int option = JOptionPane.showConfirmDialog(this, fields, "Edit User", JOptionPane.OK_CANCEL_OPTION);
-
-            if (option == JOptionPane.OK_OPTION) {
-                String newName = nameField.getText().trim();
-                String newEmail = emailField.getText().trim();
-                String newPassword = new String(passwordField.getPassword()).trim();
-                String newRole = roleField.getText().trim();
-                int userId = (int) model.getValueAt(row, 0);  // Get the current user's ID
-
-                try {
-                    // Perform validation using InputValidator methods
-                    InputValidator.validateNonEmpty(newName, "Name");
-                    InputValidator.validateNonEmpty(newEmail, "Email");
-                    InputValidator.validateNonEmpty(newPassword, "Password");
-                    InputValidator.validateNonEmpty(newRole, "Role");
-                    InputValidator.validateEmail(newEmail, userId);  // Pass the user ID for edit validation
-                    InputValidator.validateFullName(newName);  // Validate full name format
-                    InputValidator.validateRole(newRole);  // Validate role
-
-                } catch (InvalidInputException ex) {
-                    JOptionPane.showMessageDialog(this, ex.getMessage());
-                    return;
-                }
-
-                int confirm = JOptionPane.showConfirmDialog(this,
-                        "Are you sure you want to update this user?", "Confirm Edit", JOptionPane.YES_NO_OPTION);
-
-                if (confirm == JOptionPane.YES_OPTION) {
-                    try (Connection conn = DatabaseConnection.getConnection()) {
-                        String sql = "UPDATE users SET name = ?, email = ?, password = ?, role = ? WHERE id = ?";
-                        PreparedStatement pst = conn.prepareStatement(sql);
-                        pst.setString(1, newName);
-                        pst.setString(2, newEmail);
-                        pst.setString(3, newPassword);  // Update password
-                        pst.setString(4, newRole);
-                        pst.setInt(5, id);
-
-                        pst.executeUpdate();
-                        JOptionPane.showMessageDialog(this, "User updated successfully!");
-                        refresh.doClick();  // Refresh the table
-                    } catch (SQLException ex) {
-                        JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
-                    }
-                }
-            }
+            if (row != -1) showUserDialog(row);
+            else JOptionPane.showMessageDialog(this, "Select a row to edit");
         });
+        deleteBtn.addActionListener(e -> deleteUser());
 
-        // Delete button action: deletes a user from the database
-        deleteBtn.addActionListener(e -> {
-            int row = table.getSelectedRow();
-            if (row == -1) {
-                JOptionPane.showMessageDialog(this, "Select a row to delete");
-                return;
-            }
-
-            int id = (int) model.getValueAt(row, 0);
-
-            int option = JOptionPane.showConfirmDialog(this, "Are you sure you want to delete this user?", "Confirm Delete", JOptionPane.YES_NO_OPTION);
-
-            if (option == JOptionPane.YES_OPTION) {
-                try (Connection conn = DatabaseConnection.getConnection()) {
-                    String sql = "DELETE FROM users WHERE id = ?";
-                    PreparedStatement pst = conn.prepareStatement(sql);
-                    pst.setInt(1, id);
-                    pst.executeUpdate();
-
-                    JOptionPane.showMessageDialog(this, "User deleted successfully!");
-                    refresh.doClick();  // Refresh the table
-                } catch (SQLException ex) {
-                    JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
-                }
-            }
-        });
-
-        // Layout for the panel
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.add(new JScrollPane(table), BorderLayout.CENTER);
+        // Layout
         JPanel buttonPanel = new JPanel();
-        buttonPanel.add(refresh);
+        buttonPanel.add(refreshBtn);
         buttonPanel.add(addBtn);
         buttonPanel.add(editBtn);
         buttonPanel.add(deleteBtn);
-        panel.add(buttonPanel, BorderLayout.SOUTH);
 
-        // Initial table load
-        refresh.doClick();
+        add(new JScrollPane(table), BorderLayout.CENTER);
+        add(buttonPanel, BorderLayout.SOUTH);
 
-        // Add the final panel to the current panel
-        add(panel, BorderLayout.CENTER);
+        loadData(); // Initial load
+    }
+
+    private void loadData() {
+        try (Connection conn = DatabaseConnection.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery("SELECT * FROM users")) {
+            model.setRowCount(0);
+            while (rs.next()) {
+                model.addRow(new Object[]{rs.getInt("id"), rs.getString("name"),
+                        rs.getString("email"), rs.getString("password"), rs.getString("role")});
+            }
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Database Error: " + ex.getMessage());
+        }
+    }
+
+    private void showUserDialog(Integer selectedRow) {
+        boolean isEdit = (selectedRow != null);
+        JTextField nameF = new JTextField(isEdit ? (String) model.getValueAt(selectedRow, 1) : "");
+        JTextField emailF = new JTextField(isEdit ? (String) model.getValueAt(selectedRow, 2) : "");
+        JPasswordField passF = new JPasswordField(isEdit ? (String) model.getValueAt(selectedRow, 3) : "");
+        JTextField roleF = new JTextField(isEdit ? (String) model.getValueAt(selectedRow, 4) : "");
+
+        Object[] fields = {"Name:", nameF, "Email:", emailF, "Password:", passF, "Role:", roleF};
+        int option = JOptionPane.showConfirmDialog(this, fields, isEdit ? "Edit User" : "Add User", JOptionPane.OK_CANCEL_OPTION);
+
+        if (option == JOptionPane.OK_OPTION) {
+            String name = nameF.getText().trim();
+            String email = emailF.getText().trim();
+            String pass = new String(passF.getPassword()).trim();
+            String role = roleF.getText().trim();
+            int userId = isEdit ? (int) model.getValueAt(selectedRow, 0) : 0;
+
+            try {
+                // Validation Logic
+                InputValidator.validateNonEmpty(name, "Name");
+                InputValidator.validateNonEmpty(email, "Email");
+                InputValidator.validateNonEmpty(pass, "Password");
+                InputValidator.validateNonEmpty(role, "Role");
+                InputValidator.validateEmail(email, userId);
+                InputValidator.validateFullName(name);
+                InputValidator.validateRole(role);
+
+                saveUser(userId, name, email, pass, role, isEdit);
+            } catch (InvalidInputException ex) {
+                JOptionPane.showMessageDialog(this, ex.getMessage());
+            }
+        }
+    }
+
+    private void saveUser(int id, String name, String email, String pass, String role, boolean isEdit) {
+        String confirmMsg = "Are you sure you want to " + (isEdit ? "update" : "add") + " this user?";
+        if (JOptionPane.showConfirmDialog(this, confirmMsg, "Confirm", JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION) return;
+
+        String sql = isEdit ? "UPDATE users SET name=?, email=?, password=?, role=? WHERE id=?"
+                : "INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pst = conn.prepareStatement(sql)) {
+            pst.setString(1, name);
+            pst.setString(2, email);
+            pst.setString(3, pass);
+            pst.setString(4, role);
+            if (isEdit) pst.setInt(5, id);
+
+            pst.executeUpdate();
+            loadData();
+            JOptionPane.showMessageDialog(this, "Success!");
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Error saving: " + ex.getMessage());
+        }
+    }
+
+    private void deleteUser() {
+        int row = table.getSelectedRow();
+        if (row == -1) {
+            JOptionPane.showMessageDialog(this, "Select a row to delete");
+            return;
+        }
+
+        if (JOptionPane.showConfirmDialog(this, "Delete user?", "Confirm", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+            try (Connection conn = DatabaseConnection.getConnection();
+                 PreparedStatement pst = conn.prepareStatement("DELETE FROM users WHERE id = ?")) {
+                pst.setInt(1, (int) model.getValueAt(row, 0));
+                pst.executeUpdate();
+                loadData();
+            } catch (SQLException ex) {
+                JOptionPane.showMessageDialog(this, "Error deleting: " + ex.getMessage());
+            }
+        }
     }
 }

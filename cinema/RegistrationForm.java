@@ -86,79 +86,46 @@ public class RegistrationForm extends JFrame {
     }
 
     private void registerUser() {
-        // Retrieve the user input
-        String email = emailField.getText();
+        String email = emailField.getText().trim();
         String password = new String(passwordField.getPassword());
         String confirmPassword = new String(confirmPasswordField.getPassword());
-        String fullName = fullNameField.getText();
+        String fullName = fullNameField.getText().trim();
 
         try {
-            // Validate email format
-            if (email.trim().isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Email cannot be empty.");
-                return;
-            } else {
-                InputValidator.validateEmail(email, 0);  // Validate email format
-            }
+            // 1. Let the validator handle the format AND the empty check
+            InputValidator.validateEmail(email, 0);
+            InputValidator.validateFullName(fullName);
 
-            // Validate full name format
-            if (fullName.trim().isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Full Name cannot be empty.");
-                return;
-            } else {
-                InputValidator.validateFullName(fullName); // Validate full name format
+            // 2. Simple logic checks for passwords
+            if (password.isEmpty()) {
+                throw new InvalidInputException("Password cannot be empty.");
             }
-
-            // Validate password
-            if (password.trim().isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Password cannot be empty.");
-                return;
-            }
-
-            // Validate confirm password
-            if (confirmPassword.trim().isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Confirm Password cannot be empty.");
-                return;
-            }
-
-            // Check if passwords match
             if (!password.equals(confirmPassword)) {
-                JOptionPane.showMessageDialog(this, "Passwords do not match!");
-                return;
+                throw new InvalidInputException("Passwords do not match!");
             }
 
-            // Now, general check for empty fields (after format validation)
-            if (email.trim().isEmpty() || password.trim().isEmpty() || fullName.trim().isEmpty() || confirmPassword.trim().isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Please fill in all fields!");
-                return;
-            }
-
-
-
-            // Insert the data into the database
+            // 3. Database logic
             try (Connection conn = DatabaseConnection.getConnection()) {
                 String query = "INSERT INTO users (email, password, name, role) VALUES (?, ?, ?, ?)";
                 PreparedStatement pst = conn.prepareStatement(query);
                 pst.setString(1, email);
-                pst.setString(2, password);  // Better to hash the password before storing it
+                pst.setString(2, password); // Note: Always hash passwords in production!
                 pst.setString(3, fullName);
-                pst.setString(4, "USER");  // Default role for a new user is "USER"
+                pst.setString(4, "USER");
+
                 pst.executeUpdate();
                 JOptionPane.showMessageDialog(this, "Registration Successful!");
 
-                // Redirect to the login page after successful registration
-                new LoginForm().setVisible(true); // Show the login page
-                this.dispose(); // Close the current registration window
-
-            } catch (SQLException ex) {
-                JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
+                new LoginForm().setVisible(true);
+                this.dispose();
             }
         } catch (InvalidInputException ex) {
+            // This catches all your custom validation errors in one place
             JOptionPane.showMessageDialog(this, ex.getMessage());
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Database Error: " + ex.getMessage());
         }
     }
-
-
 
     public static void main(String[] args) {
         // Create and display the registration form
