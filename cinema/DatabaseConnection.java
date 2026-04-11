@@ -1,36 +1,40 @@
 package cinema;
-
+//Importing necessary classes from the java.sql package to handle database connectivity.
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
+/**
+ * The DatabaseConnection class provides a centralized way to establish
+ * and manage a connection to the MySQL database.
+ */
 public class DatabaseConnection {
-
-    // Connection parameters
     private static final String URL = "jdbc:mysql://localhost:3306/cinema_db";
-    private static final String USER = "cinemadb"; // replace with your username
-    private static final String PASSWORD = "b=dRn:iFr$?1G!zX.YqEF-745t+1suq&0oC$@"; // replace with your password
+    private static final String USER = "cinemadb";
+    private static final String PASSWORD = "b=dRn:iFr$?1G!zX.YqEF-745t+1suq&0oC$@";
 
-    // Method to get a connection to the database
+    // Establishes a connection to the database using the defined parameters.
     public static Connection getConnection() throws SQLException {
         try {
-            //System.out.println("Attempting to connect to MySQL...");
-            // Connecting to the database
+            // DriverManager.getConnection attempts to establish a connection to database
             Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
-            //System.out.println("Successfully connected to MySQL!");
             return conn;
         } catch (SQLException ex) {
+            //If connection fails, show the error message and the stack trace
             System.err.println("Database connection error: " + ex.getMessage());
-            ex.printStackTrace(); // Prints the full stack trace of the error
-            throw ex;
+            ex.printStackTrace(); // Print stack trace for debugging purposes
+            throw ex; // Re-throw the exception
         }
     }
 
+    //Main method used for testing the database connection
     public static void main(String[] args) {
         try {
-            getConnection(); // Trying to connect
+            // Attempt to trigger the connection logic
+            getConnection();
+            System.out.println("Connection test successful!");
         } catch (SQLException e) {
-            // Handling connection error
+            // Error is already printed in the getConnection() method
         }
     }
 }

@@ -1,7 +1,5 @@
 package cinema;
-
 import cinema.panels.*;
-
 import javax.swing.*;
 import java.awt.*;
 
@@ -17,8 +15,13 @@ public class AdminPanel extends JFrame {
         // Create a JTabbedPane to hold the tabs (each panel will be a tab)
         JTabbedPane tabbedPane = new JTabbedPane();
 
+        // Add tabs for each section of the admin panel
+        //tabbedPane.addTab("Tickets", new TicketsPanel());
+        //tabbedPane.addTab("Movies", new MoviesPanel());
         tabbedPane.addTab("Users", new UsersPanel());
-     
+       //tabbedPane.addTab("Halls", new HallsPanel());
+        //tabbedPane.addTab("Screenings", new ScreeningsPanel());
+        //tabbedPane.addTab("Seats", new SeatsPanel());
 
         // Add the tabbedPane to the frame
         add(tabbedPane, BorderLayout.CENTER);  // Main content in the center

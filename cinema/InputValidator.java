@@ -1,10 +1,13 @@
 package cinema;
-
 import java.util.Date;
-
 import java.sql.*;
 
-public class InputValidator extends Exception{
+/**
+ * InputValidator utility class.
+ * Note: Changed from 'extends Exception' to a standard class,
+ * as it contains static utility methods rather than being an exception itself.
+ */
+public class InputValidator{
 
     // Validate if a string can be parsed as a positive integer
     public static void validatePositiveInteger(String input) throws InvalidInputException {
@@ -33,7 +36,7 @@ public class InputValidator extends Exception{
     // Validate email format (using regex) and check if email is already taken
     public static void validateEmail(String email, int userId) throws InvalidInputException {
         String emailRegex = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
-        if (!email.matches(emailRegex)) {
+        if (email == null || !email.matches(emailRegex)) {
             throw new InvalidInputException("Invalid email format. Please enter a valid email address.");
         }
 
@@ -43,16 +46,17 @@ public class InputValidator extends Exception{
         }
     }
 
-    // Method to check if the email already exists in the database (excluding the current user's email)
+    // Method to check if the email already exists in the database
     private static boolean isEmailTaken(String email, int userId) throws InvalidInputException {
+        // Assumes DatabaseConnection class exists in your project
         try (Connection conn = DatabaseConnection.getConnection()) {
             String query = "SELECT COUNT(*) FROM users WHERE email = ? AND id != ?";
             PreparedStatement pst = conn.prepareStatement(query);
             pst.setString(1, email);
-            pst.setInt(2, userId);  // Exclude the current user's email
+            pst.setInt(2, userId);
             ResultSet rs = pst.executeQuery();
             if (rs.next()) {
-                return rs.getInt(1) > 0;  // If count > 0, email already exists
+                return rs.getInt(1) > 0;
             }
         } catch (SQLException ex) {
             throw new InvalidInputException("Database error: " + ex.getMessage());
@@ -73,29 +77,23 @@ public class InputValidator extends Exception{
             throw new InvalidInputException("Full Name cannot be empty.");
         }
 
-        // Regular expression to allow only letters and spaces
         String nameRegex = "^[a-zA-Z\\s]+$";
         if (!fullName.matches(nameRegex)) {
             throw new InvalidInputException("Full Name can only contain letters and spaces.");
         }
     }
 
-    // Validate if a release date is valid (example: check that the date is not null)
+    // Validate if a release date is valid
     public static void validateReleaseDate(Date releaseDate) throws InvalidInputException {
         if (releaseDate == null) {
             throw new InvalidInputException("Please select a valid release date.");
         }
     }
 
-
-
     // Method to validate role (must be either "ADMIN" or "USER")
     public static void validateRole(String role) throws InvalidInputException {
-        if (!(role.equals("ADMIN") || role.equals("USER"))) {
+        if (role == null || !(role.equals("ADMIN") || role.equals("USER"))) {
             throw new InvalidInputException("Role must be either ADMIN or USER.");
         }
     }
-
-
-
 }
