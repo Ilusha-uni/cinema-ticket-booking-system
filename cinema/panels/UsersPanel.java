@@ -3,12 +3,9 @@
  */
 package cinema.panels;
 
-/*
- * Import custom utility classes for database connectivity and input validation.
- */
-import cinema.DatabaseConnection;
-import cinema.InputValidator;
-import cinema.InvalidInputException;
+import cinema.database.DatabaseConnection;
+import cinema.exception.InputValidator;
+import cinema.exception.InvalidInputException;
 
 /*
  * Import standard Java libraries for GUI components (Swing/AWT) and database operations (SQL).
