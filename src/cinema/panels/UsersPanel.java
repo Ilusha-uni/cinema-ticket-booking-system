@@ -142,6 +142,8 @@ public class UsersPanel extends JPanel {
                 InputValidator.validateNonEmpty(name, "Name");
                 InputValidator.validateNonEmpty(email, "Email");
                 InputValidator.validateNonEmpty(pass, "Password");
+                if (pass.length() < 6) throw new InvalidInputException("Password must be at least 6 characters long.");
+
                 InputValidator.validateNonEmpty(role, "Role");
                 InputValidator.validateEmail(email, userId);
                 InputValidator.validateFullName(name);
