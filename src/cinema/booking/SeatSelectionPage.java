@@ -1,14 +1,15 @@
-// Define the package for organizing classes related to the cinema application
+// Package declaration
 package cinema.booking;
 
-// Import Swing and AWT components for the Graphical User Interface (GUI)
-import javax.swing.*;
-
+// Import project-specific classes
 import cinema.database.DatabaseConnection;
 import cinema.models.Movie;
 import cinema.models.Seat;
 import cinema.models.Showtime;
 
+// Import necessary libraries for GUI (Swing/AWT) and Database (SQL)
+// and utility classes for data collection
+import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -153,6 +154,21 @@ public class SeatSelectionPage extends JFrame {
 
         // Proceed if at least one seat is chosen
         if (!selectedIds.isEmpty()) {
+
+            // Final Seat confirmation prompt
+            int choice = JOptionPane.showConfirmDialog(
+                    this,
+                    "You have selected " + selectedIds.size() + " seat(s).\nDo you want to proceed to checkout?",
+                    "Confirm Selection",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.QUESTION_MESSAGE
+            );
+
+            // If the user clicks "No" or closes the dialog, stop the redirection
+            if (choice != JOptionPane.YES_OPTION) {
+                return;
+            }
+
             double totalPrice = selectedIds.size() * getShowtimeDetails(screeningId).getPrice();
 
             // Open the confirmation page and pass all necessary booking data
