@@ -1,15 +1,16 @@
-// Define the package name for the cinema application
+// Package declaration
 package cinema.booking;
 
-// Import necessary Java Swing and AWT classes for the GUI
-import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
-
+// Import project-specific classes
 import cinema.database.DatabaseConnection;
 import cinema.models.Movie;
 import cinema.models.Showtime;
 
+// Import necessary libraries for GUI (Swing/AWT) and Database (SQL)
+// and utility classes for data collection and File class
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.io.File;
 import java.sql.*;
@@ -113,11 +114,13 @@ public class WatchShowtimesPage extends JFrame {
         JLabel title = new JLabel(movie.getTitle());
         title.setFont(new Font("SansSerif", Font.BOLD, 20));
 
-        // Metadata: Rating, Duration, and Release Date
-        JLabel meta = new JLabel(String.format("⭐ %.1f | %d min | %s",
-                movie.getRating(), movie.getDuration(), movie.getReleaseDate()));
-        meta.setFont(new Font("SansSerif", Font.BOLD, 18));
-
+        // Create movieInfo string
+        String movieInfo = "🕒 " + movie.getDuration() + " min  |  ⭐ " + movie.getRating() + "  |  📅 " + movie.getReleaseDate();
+        // Create a JLabel for the movieInfo
+        JLabel infoLabel = new JLabel(movieInfo);
+        infoLabel.setFont(new Font("SansSerif", Font.BOLD, 18)); // Use the same font size for consistency
+        // Add the infoLabel to the panel
+        info.add(infoLabel);
         // Description area with word wrapping
         JTextArea desc = new JTextArea(movie.getDescription());
         desc.setFont(new Font("SansSerif", Font.PLAIN, 16));
@@ -125,10 +128,9 @@ public class WatchShowtimesPage extends JFrame {
         desc.setLineWrap(true);
         desc.setEditable(false);
         desc.setOpaque(false);
-
-        // Assemble the info panel
+        // Add other components to the panel
         info.add(title);
-        info.add(meta);
+        info.add(infoLabel);
         info.add(desc);
 
         header.add(info, BorderLayout.CENTER);
