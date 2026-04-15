@@ -1,15 +1,13 @@
-/*
- * Defines the package location for the user interface components of the cinema application.
- */
+// Package declaration
 package cinema.panels;
 
+// Import project-specific classes
 import cinema.database.DatabaseConnection;
 import cinema.exception.InputValidator;
 import cinema.exception.InvalidInputException;
 
-/*
- * Import standard Java libraries for GUI components (Swing/AWT) and database operations (SQL).
- */
+
+//Import standard Java libraries for GUI components (Swing/AWT) and database operations (SQL).
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
@@ -108,25 +106,31 @@ public class UsersPanel extends JPanel {
     private void showUserDialog(Integer selectedRow) {
         boolean isEdit = (selectedRow != null);
 
-        // Initialize input fields; if editing, pre-fill them with current table values
-        JTextField nameF = new JTextField(isEdit ? (String) model.getValueAt(selectedRow, 1) : "");
-        JTextField emailF = new JTextField(isEdit ? (String) model.getValueAt(selectedRow, 2) : "");
-        JPasswordField passF = new JPasswordField(isEdit ? (String) model.getValueAt(selectedRow, 3) : "");
-        JTextField roleF = new JTextField(isEdit ? (String) model.getValueAt(selectedRow, 4) : "");
+        // 1. Create the Dialog
+        JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this),
+                isEdit ? "Edit User" : "Add User", true);
+        dialog.setLayout(new BorderLayout(10, 10));
 
-        // Prepare the dialog layout with labels and input fields
-        Object[] fields = {
-                "Name:", nameF,
-                "Email:", emailF,
-                "Password:", passF,
-                "Role:", roleF
-        };
+        // 2. Initialize fields
+        JTextField nameF = new JTextField(isEdit ? (String) model.getValueAt(selectedRow, 1) : "", 20);
+        JTextField emailF = new JTextField(isEdit ? (String) model.getValueAt(selectedRow, 2) : "", 20);
+        JPasswordField passF = new JPasswordField(isEdit ? (String) model.getValueAt(selectedRow, 3) : "", 20);
+        JTextField roleF = new JTextField(isEdit ? (String) model.getValueAt(selectedRow, 4) : "", 20);
 
-        int option = JOptionPane.showConfirmDialog(this, fields,
-                isEdit ? "Edit User" : "Add User", JOptionPane.OK_CANCEL_OPTION);
+        // 3. Create Form Panel
+        JPanel formPanel = new JPanel(new GridLayout(4, 2, 5, 5));
+        formPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        formPanel.add(new JLabel("Name:")); formPanel.add(nameF);
+        formPanel.add(new JLabel("Email:")); formPanel.add(emailF);
+        formPanel.add(new JLabel("Password:")); formPanel.add(passF);
+        formPanel.add(new JLabel("Role:")); formPanel.add(roleF);
 
-        // If the user clicks "OK", begin data extraction and validation
-        if (option == JOptionPane.OK_OPTION) {
+        // 4. Create Buttons
+        JButton saveBtn = new JButton("Save");
+        JButton cancelBtn = new JButton("Cancel");
+
+        // SAVE LOGIC: This is where the magic happens
+        saveBtn.addActionListener(e -> {
             String name = nameF.getText().trim();
             String email = emailF.getText().trim();
             String pass = new String(passF.getPassword()).trim();
@@ -134,9 +138,7 @@ public class UsersPanel extends JPanel {
             int userId = isEdit ? (int) model.getValueAt(selectedRow, 0) : 0;
 
             try {
-                /* * Execute various validation rules.
-                 * If any rule fails, it throws an InvalidInputException.
-                 */
+                // Run your validations
                 InputValidator.validateNonEmpty(name, "Name");
                 InputValidator.validateNonEmpty(email, "Email");
                 InputValidator.validateNonEmpty(pass, "Password");
@@ -145,13 +147,28 @@ public class UsersPanel extends JPanel {
                 InputValidator.validateFullName(name);
                 InputValidator.validateRole(role);
 
-                // If validation passes, proceed to save the data
+                // If it passes, save and CLOSE the dialog
                 saveUser(userId, name, email, pass, role, isEdit);
+                dialog.dispose();
             } catch (InvalidInputException ex) {
-                // Show validation error to the user
-                JOptionPane.showMessageDialog(this, ex.getMessage());
+                // Show error, but DON'T call dialog.dispose()
+                // This keeps the form visible with the user's input intact
+                JOptionPane.showMessageDialog(dialog, ex.getMessage(), "Validation Error", JOptionPane.WARNING_MESSAGE);
             }
-        }
+        });
+
+        cancelBtn.addActionListener(e -> dialog.dispose());
+
+        // 5. Assemble and Show
+        JPanel btnPanel = new JPanel();
+        btnPanel.add(saveBtn);
+        btnPanel.add(cancelBtn);
+
+        dialog.add(formPanel, BorderLayout.CENTER);
+        dialog.add(btnPanel, BorderLayout.SOUTH);
+        dialog.pack();
+        dialog.setLocationRelativeTo(this);
+        dialog.setVisible(true);
     }
 
     /**
@@ -178,7 +195,6 @@ public class UsersPanel extends JPanel {
 
             // Execute the write operation and refresh the UI
             pst.executeUpdate();
-            loadData();
             JOptionPane.showMessageDialog(this, "Success!");
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(this, "Error saving: " + ex.getMessage());
@@ -195,7 +211,15 @@ public class UsersPanel extends JPanel {
             return;
         }
 
-        // Security check: Confirm the user really wants to delete the record
+        int userId = (int) model.getValueAt(row, 0); // Get the user ID from the selected row
+
+        // Check if the user has any tickets booked
+        if (hasBookedTickets(userId)) {
+            JOptionPane.showMessageDialog(this, "Cannot delete this user. They have booked tickets.");
+            return; // Prevent deletion if the user has booked tickets
+        }
+
+        // If no tickets are booked, confirm the deletion
         if (JOptionPane.showConfirmDialog(this, "Delete user?", "Confirm", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
             try (Connection conn = DatabaseConnection.getConnection();
                  PreparedStatement pst = conn.prepareStatement("DELETE FROM users WHERE id = ?")) {
@@ -204,11 +228,34 @@ public class UsersPanel extends JPanel {
                 pst.setInt(1, (int) model.getValueAt(row, 0));
                 pst.executeUpdate();
 
-                // Refresh the table to reflect the removal
-                loadData();
+                JOptionPane.showMessageDialog(this, "User deleted successfully!");
             } catch (SQLException ex) {
                 JOptionPane.showMessageDialog(this, "Error deleting: " + ex.getMessage());
             }
         }
+    }
+
+    /**
+     * Checks if the user has any booked tickets in the system.
+     * @param userId The ID of the user to check.
+     * @return true if the user has booked tickets, false otherwise.
+     */
+    private boolean hasBookedTickets(int userId) {
+        // SQL query to check if there are any tickets booked by the user
+        String query = "SELECT COUNT(*) FROM tickets WHERE user_id = ? AND status = 'BOOKED'";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pst = conn.prepareStatement(query)) {
+
+            pst.setInt(1, userId); // Set the user ID in the query
+            ResultSet rs = pst.executeQuery(); // Execute the query
+
+            if (rs.next()) {
+                return rs.getInt(1) > 0; // If the count is greater than 0, the user has booked tickets
+            }
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Database error: " + ex.getMessage());
+        }
+        return false; // Default to false if there's an error or no tickets found
     }
 }
