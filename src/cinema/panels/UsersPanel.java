@@ -120,7 +120,7 @@ public class UsersPanel extends JPanel {
         // 3. Create Form Panel
         JPanel formPanel = new JPanel(new GridLayout(4, 2, 5, 5));
         formPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        formPanel.add(new JLabel("Name:")); formPanel.add(nameF);
+        formPanel.add(new JLabel("Full Name:")); formPanel.add(nameF);
         formPanel.add(new JLabel("Email:")); formPanel.add(emailF);
         formPanel.add(new JLabel("Password:")); formPanel.add(passF);
         formPanel.add(new JLabel("Role:")); formPanel.add(roleF);
@@ -129,11 +129,10 @@ public class UsersPanel extends JPanel {
         JButton saveBtn = new JButton("Save");
         JButton cancelBtn = new JButton("Cancel");
 
-
         // Add action listener to the Save button
         saveBtn.addActionListener(e -> {
 
-	        // Retrieve and clean user input from form fields
+            // Retrieve and clean user input from form fields
             String name = nameF.getText().trim();
             String email = emailF.getText().trim();
             String pass = new String(passF.getPassword()).trim();
@@ -142,18 +141,17 @@ public class UsersPanel extends JPanel {
             // Determine user ID (only relevant when editing an existing user)
             int userId = isEdit ? (int) model.getValueAt(selectedRow, 0) : 0;
 
-            try {
-                // -------- Validation section --------
+            try { // -------- Validation section --------
 
- 		        // Ensure all required fields are filled
+                // Ensure all required fields are filled
                 InputValidator.validateNonEmpty(name, "Name");
                 InputValidator.validateNonEmpty(email, "Email");
                 InputValidator.validateNonEmpty(pass, "Password");
-		
-		        // Enforce minimum password length
+
+                // Enforce minimum password length
                 if (pass.length() < 6) throw new InvalidInputException("Password must be at least 6 characters long.");
-		
-		        // Validate email,full name,role format
+
+                // Validate email,full name,role format
                 InputValidator.validateNonEmpty(role, "Role");
                 InputValidator.validateEmail(email, userId);
                 InputValidator.validateFullName(name);
@@ -161,10 +159,8 @@ public class UsersPanel extends JPanel {
 
                 // If all validations pass, save the user to the database
                 saveUser(userId, name, email, pass, role, isEdit);
-
-		        // Close the dialog after successful save
-                dialog.dispose(); 
-
+                // Close the dialog after successful save
+                dialog.dispose();
             } catch (InvalidInputException ex) {
                 // Show validation error message to the user
                 JOptionPane.showMessageDialog(dialog, ex.getMessage(), "Validation Error", JOptionPane.WARNING_MESSAGE);
