@@ -129,32 +129,44 @@ public class UsersPanel extends JPanel {
         JButton saveBtn = new JButton("Save");
         JButton cancelBtn = new JButton("Cancel");
 
-        // SAVE LOGIC: This is where the magic happens
+
+        // Add action listener to the Save button
         saveBtn.addActionListener(e -> {
+
+	        // Retrieve and clean user input from form fields
             String name = nameF.getText().trim();
             String email = emailF.getText().trim();
             String pass = new String(passF.getPassword()).trim();
             String role = roleF.getText().trim();
+
+            // Determine user ID (only relevant when editing an existing user)
             int userId = isEdit ? (int) model.getValueAt(selectedRow, 0) : 0;
 
             try {
-                // Run your validations
+                // -------- Validation section --------
+
+ 		        // Ensure all required fields are filled
                 InputValidator.validateNonEmpty(name, "Name");
                 InputValidator.validateNonEmpty(email, "Email");
                 InputValidator.validateNonEmpty(pass, "Password");
+		
+		        // Enforce minimum password length
                 if (pass.length() < 6) throw new InvalidInputException("Password must be at least 6 characters long.");
-
+		
+		        // Validate email,full name,role format
                 InputValidator.validateNonEmpty(role, "Role");
                 InputValidator.validateEmail(email, userId);
                 InputValidator.validateFullName(name);
                 InputValidator.validateRole(role);
 
-                // If it passes, save and CLOSE the dialog
+                // If all validations pass, save the user to the database
                 saveUser(userId, name, email, pass, role, isEdit);
-                dialog.dispose();
+
+		        // Close the dialog after successful save
+                dialog.dispose(); 
+
             } catch (InvalidInputException ex) {
-                // Show error, but DON'T call dialog.dispose()
-                // This keeps the form visible with the user's input intact
+                // Show validation error message to the user
                 JOptionPane.showMessageDialog(dialog, ex.getMessage(), "Validation Error", JOptionPane.WARNING_MESSAGE);
             }
         });
