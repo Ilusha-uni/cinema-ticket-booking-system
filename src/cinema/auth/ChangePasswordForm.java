@@ -1,12 +1,14 @@
+// Package declaration
 package cinema.auth;
 
-import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-
+// Import project-specific classes
 import cinema.database.DatabaseConnection;
 import cinema.exception.InputValidator;
 import cinema.exception.InvalidInputException;
 
+// Import necessary libraries for GUI (Swing/AWT) and Database (SQL)
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.sql.*;
 
@@ -110,7 +112,7 @@ public class ChangePasswordForm extends JFrame {
             InputValidator.validateNonEmpty(newPass, "New Password");
             InputValidator.validateEmail(email, -1);
 
-            // Basic business logic for security
+            // Basic logic for security
             if (newPass.length() < 6) {
                 throw new InvalidInputException("New password must be at least 6 characters long.");
             }
