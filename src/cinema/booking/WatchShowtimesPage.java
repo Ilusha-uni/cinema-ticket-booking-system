@@ -12,7 +12,6 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
-import java.io.File;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +24,6 @@ public class WatchShowtimesPage extends JFrame {
 
     // Unique identifier for the selected movie
     private final int movieId;
-
     // UI Constants for consistent styling (Colors)
     private final Color BACKGROUND_COLOR = new Color(240, 240, 240);
     private final Color NAV_BAR_COLOR = new Color(18, 18, 18);
@@ -89,7 +87,6 @@ public class WatchShowtimesPage extends JFrame {
                 mainContent.add(Box.createRigidArea(new Dimension(0, 15))); // Spacing between rows
             }
         }
-
         // Add the content inside a scroll pane for long lists
         add(new JScrollPane(mainContent), BorderLayout.CENTER);
     }
@@ -216,11 +213,21 @@ public class WatchShowtimesPage extends JFrame {
      * Safely loads an image file and scales it for the UI.
      */
     private ImageIcon loadImage(String imagePath) {
-        File imageFile = new File("images/" + (imagePath == null ? "default.jpg" : imagePath));
-        // Fallback to default image if file does not exist
-        String path = imageFile.exists() ? imageFile.getAbsolutePath() : "images/default.jpg";
-        Image img = new ImageIcon(path).getImage();
-        // Return a smooth-scaled version of the image
+        // choose file name or fallback to default
+        String fileName = (imagePath == null ? "default.jpg" : imagePath);
+        // try to load image from classpath (/images folder inside IDE or JAR)
+        java.net.URL resource = getClass().getResource("/images/" + fileName);
+        // fallback to default image if requested one is missing
+        if (resource == null) {
+            resource = getClass().getResource("/images/default.jpg");
+        }
+        // fail fast if even default image is not found
+        if (resource == null) {
+            throw new RuntimeException("Image not found: " + fileName);
+        }
+        // convert URL resource to Image object
+        Image img = new ImageIcon(resource).getImage();
+        // scale image smoothly and return as ImageIcon
         return new ImageIcon(img.getScaledInstance(130, 180, Image.SCALE_SMOOTH));
     }
 
