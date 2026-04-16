@@ -1,12 +1,14 @@
+// Package declaration
 package cinema.auth;
+
+// Import project-specific classes
+import cinema.booking.MovieListingPage;
+import cinema.database.DatabaseConnection;
+import cinema.panels.AdminPanel;
 
 // Import necessary libraries for GUI (Swing/AWT) and Database (SQL)
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-
-import cinema.booking.MovieListingPage;
-import cinema.database.DatabaseConnection;
-
 import java.awt.*;
 import java.awt.event.*;
 import java.sql.*;
@@ -157,17 +159,30 @@ public class LoginForm extends JFrame {
                 // If a record is found, store user info in a session
                 UserSession.setUserId(rs.getInt("id"));
                 String name = rs.getString("name");
+                String role = rs.getString("role");
 
-                // Navigate to the main application page
+                this.dispose(); //Dispose Login form and open appropriate windows based on role
+
+                // Open main movie page for all users
                 new MovieListingPage().setVisible(true);
-                this.dispose();
-                JOptionPane.showMessageDialog(this, "Welcome, " + name + "!");
+
+                // If the user is an admin
+                if ("ADMIN".equals(role)) {
+                    // Open admin panel window
+                    new AdminPanel().setVisible(true);
+                    JOptionPane.showMessageDialog(this, "Welcome ADMIN, " + name + "!");
+                }
+                // If the user is NOT an admin
+                else {
+                    JOptionPane.showMessageDialog(this, "Welcome, " + name + "!");
+                }
+
             } else {
-                // Show error if no user matches the credentials
+                // Show error if login credentials are invalid
                 JOptionPane.showMessageDialog(this, "Invalid email or password!");
             }
         } catch (SQLException ex) {
-            // Handle database errors (e.g., connection issues)
+            // Show error message if database connection or query fails
             JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
         }
     }
