@@ -67,7 +67,7 @@ public class SeatSelectionPage extends JFrame {
         // Return to the previous page when clicked
         backBtn.addActionListener(e -> {
             this.dispose(); // Close current window
-            new WatchShowtimesPage(movieId).setVisible(true); // Open showtimes page
+            new WatchShowtimesPage(movieId).setVisible(true); // Open show times page
         });
 
         topPanel.add(backBtn);
@@ -211,7 +211,9 @@ public class SeatSelectionPage extends JFrame {
                         "BOOKED".equals(rs.getString("seat_status"))
                 ));
             }
-        } catch (SQLException ex) { ex.printStackTrace(); }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
         return seats;
     }
 
@@ -228,7 +230,9 @@ public class SeatSelectionPage extends JFrame {
                         rs.getInt("duration_minutes"), rs.getDouble("rating"),
                         rs.getString("release_date"), rs.getString("image_path"));
             }
-        } catch (SQLException ex) { ex.printStackTrace(); }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
         return null;
     }
 
@@ -244,7 +248,9 @@ public class SeatSelectionPage extends JFrame {
                 return new Showtime(rs.getInt("id"), rs.getInt("movie_id"), rs.getInt("hall_id"),
                         rs.getString("start_time"), rs.getDouble("price"));
             }
-        } catch (SQLException ex) { ex.printStackTrace(); }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
         return null;
     }
 }
