@@ -11,7 +11,6 @@ import cinema.models.Showtime;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.io.File;
 import java.util.List;
 import java.sql.*;
 
@@ -73,20 +72,23 @@ public class BookingConfirmationPage extends JFrame {
         content.setBackground(Color.WHITE);
 
         // --- Poster Image Logic ---
-        // Loads and scales the movie poster, or displays a placeholder if not found
         JLabel posterLabel = new JLabel();
         posterLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        try {
-            String path = "images/" + (movie.getImagePath() == null ? "default.jpg" : movie.getImagePath());
-            if (new File(path).exists()) {
-                ImageIcon icon = new ImageIcon(new ImageIcon(path).getImage().getScaledInstance(180, 260, Image.SCALE_SMOOTH));
-                posterLabel.setIcon(icon);
-            } else {
-                posterLabel.setText("[Poster Not Found]");
-            }
-        } catch (Exception e) {
-            posterLabel.setText("[Image Error]");
+        // Determine which file to load
+        String fileName = (movie.getImagePath() == null ? "default.jpg" : movie.getImagePath());
+        // Try to load image from resources
+        java.net.URL resource = getClass().getResource("/images/" + fileName);
+        // Fallback to default image if requested one is missing
+        if (resource == null) {
+            resource = getClass().getResource("/images/default.jpg");
         }
+        // Fail fast if even default image is missing
+        if (resource == null) {
+            throw new RuntimeException("Image not found: " + fileName);
+        }
+        // Load and scale the image
+        Image img = new ImageIcon(resource).getImage().getScaledInstance(180, 260, Image.SCALE_SMOOTH);
+        posterLabel.setIcon(new ImageIcon(img));
 
         // --- Information Labels ---
         // Displaying Title, Show details, and Total Price
@@ -174,7 +176,7 @@ public class BookingConfirmationPage extends JFrame {
                 }
                 JOptionPane.showMessageDialog(this, "Booking Confirmed! Enjoy your movie!");
                 this.dispose(); // Close the confirmation page(this window)
-                System.exit(0); // Closes all windows and stops the program
+                new MovieListingPage().setVisible(true); // Redirect to movie listing
             }
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(this, "Database Error: " + ex.getMessage());
