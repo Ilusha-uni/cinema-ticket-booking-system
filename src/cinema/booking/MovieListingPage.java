@@ -1,21 +1,18 @@
-// Define the package for organizing the cinema application classes
+// Package declaration
 package cinema.booking;
 
-// Import Swing components for the GUI
-import javax.swing.*;
-// Import border classes for UI styling
-import javax.swing.border.EmptyBorder;
-
+// Import project-specific classes
 import cinema.auth.LoginForm;
 import cinema.auth.UserSession;
 import cinema.database.DatabaseConnection;
 import cinema.models.Movie;
 
-// Import AWT classes for layouts, colors, and graphics
+// Import necessary libraries for GUI (Swing/AWT) and Database (SQL)
+// and utility classes for data collection
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
-// Import SQL classes for database interaction
 import java.sql.*;
-// Import utility classes for data collection
 import java.util.ArrayList;
 import java.util.List;
 
@@ -113,7 +110,7 @@ public class MovieListingPage extends JFrame {
         // Construct file path; use default image if no path is provided
         String path = "images/" + (movie.getImagePath() == null ? "default.jpg" : movie.getImagePath());
         // Load and scale image to fit the card dimensions
-        ImageIcon icon = new ImageIcon(new ImageIcon(path).getImage().getScaledInstance(110, 150, Image.SCALE_SMOOTH));
+        ImageIcon icon = new ImageIcon(new ImageIcon(path).getImage().getScaledInstance(130, 150, Image.SCALE_SMOOTH));
         JLabel posterLabel = new JLabel(icon);
         card.add(posterLabel, BorderLayout.WEST);
 
