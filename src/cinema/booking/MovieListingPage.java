@@ -92,6 +92,21 @@ public class MovieListingPage extends JFrame {
         });
     }
 
+
+    // Loads an image from the resources
+    private ImageIcon loadResourceImage(String imagePath, int width, int height) {
+        // Choose the file name, fallback to default if null
+        String fileName = (imagePath == null ? "default.jpg" : imagePath);
+        // Try to get the image from classpath
+        java.net.URL resource = getClass().getResource("/images/" + fileName);
+        // If not found, fallback to default image
+        if (resource == null) resource = getClass().getResource("/images/default.jpg");
+        // Convert the URL resource to an Image object
+        Image img = new ImageIcon(resource).getImage();
+        // Scale the image smoothly and return as ImageIcon
+        return new ImageIcon(img.getScaledInstance(width, height, Image.SCALE_SMOOTH));
+    }
+
     /**
      * Creates a stylized JPanel (card) representing a single movie.
      * @param movie The movie object containing data.
@@ -107,10 +122,7 @@ public class MovieListingPage extends JFrame {
         card.setBackground(BACKGROUND_COLOR);
 
         // 1. Movie Poster Section
-        // Construct file path; use default image if no path is provided
-        String path = "images/" + (movie.getImagePath() == null ? "default.jpg" : movie.getImagePath());
-        // Load and scale image to fit the card dimensions
-        ImageIcon icon = new ImageIcon(new ImageIcon(path).getImage().getScaledInstance(130, 150, Image.SCALE_SMOOTH));
+        ImageIcon icon = loadResourceImage(movie.getImagePath(), 130, 150);
         JLabel posterLabel = new JLabel(icon);
         card.add(posterLabel, BorderLayout.WEST);
 
@@ -222,10 +234,4 @@ public class MovieListingPage extends JFrame {
         this.dispose(); // Close current window
     }
 
-    /**
-     * Main method to launch the GUI thread.
-     */
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new MovieListingPage().setVisible(true));
-    }
 }
