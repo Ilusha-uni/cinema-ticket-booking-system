@@ -165,8 +165,4 @@ public class RegistrationForm extends JFrame {
             JOptionPane.showMessageDialog(this, "Database Error: " + ex.getMessage());
         }
     }
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new RegistrationForm().setVisible(true));
-    }
 }
