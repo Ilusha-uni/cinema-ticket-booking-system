@@ -2,37 +2,45 @@
 package cinema.auth;
 
 // Import project-specific classes
-import cinema.database.DatabaseConnection;
 import cinema.exception.InputValidator;
 import cinema.exception.InvalidInputException;
+import cinema.dao.UserDAO;
 
-// Import necessary libraries for GUI (Swing/AWT) and Database (SQL)
+// Import necessary libraries for GUI (Swing/AWT)
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.sql.*;
 
 /**
- * ChangePasswordForm provides a graphical user interface for users to update their credentials.
- * It handles input validation, UI styling, and database interaction.
+ * Provides a password change interface for existing users.
+ * Validates current password and ensures new passwords match.
+ * Updates password using {@link cinema.dao.UserDAO}.
  */
 public class ChangePasswordForm extends JFrame {
 
-    // UI Components for user input
-    // Initialized with column size 25 to ensure the text fields are wide enough for visibility
+    /** The input field for the user's current password. */
     private JPasswordField oldPasswordField = new JPasswordField(25);
+
+    /** The input field for the user's new password. */
     private JPasswordField newPasswordField = new JPasswordField(25);
+
+    /** The input field for confirming the new password. */
     private JPasswordField confirmPasswordField = new JPasswordField(25);
+
+    /** The input field for the user's email address. */
     private JTextField emailField = new JTextField(25);
 
-    // Reusable font styles for consistency across the form
+    // Constant colors for a consistent UI theme
     private Font labelFont = new Font("Segoe UI", Font.BOLD, 16);
     private Font fieldFont = new Font("Segoe UI", Font.PLAIN, 16);
 
+    /**
+     * Constructs the ChangePasswordForm GUI and initializes all components.
+     */
     public ChangePasswordForm() {
         // Basic window configuration
         setTitle("Change Password");
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE); // Closes only this window, not the whole app
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         getContentPane().setBackground(Color.WHITE);
 
         // mainContent: The primary container using BorderLayout for flexible spacing
@@ -69,7 +77,7 @@ public class ChangePasswordForm extends JFrame {
     }
 
     /**
-     * Helper method to style labels and text fields before adding them to a panel.
+     * Adds a label and text field to the specified panel, applying consistent styling.
      */
     private void addStyledField(JPanel panel, String labelText, JTextField field) {
         JLabel label = new JLabel(labelText);
@@ -84,7 +92,8 @@ public class ChangePasswordForm extends JFrame {
     }
 
     /**
-     * Standardizes the look of the "Update" button.
+     * Styles a JButton to match the application's design guidelines.
+     * Sets font, background color, foreground color, cursor, size, and disables focus painting.
      */
     private void styleButton(JButton btn) {
         btn.setFont(new Font("Segoe UI", Font.BOLD, 18));
@@ -96,7 +105,8 @@ public class ChangePasswordForm extends JFrame {
     }
 
     /**
-     * Orchestrates the validation logic. If checks pass, it proceeds to DB update.
+     * Validates input and updates the password in the database.
+     * Shows messages for success, errors, or invalid input.
      */
     private void updatePassword() {
         // Extracting data from fields
@@ -119,48 +129,22 @@ public class ChangePasswordForm extends JFrame {
             if (!newPass.equals(confirmPass)) {
                 throw new InvalidInputException("New passwords do not match!");
             }
+            UserDAO userDAO = new UserDAO();
+            boolean passwordChangedSuccess = userDAO.changePassword(email, oldPass, newPass);
 
-            // If all validations pass, communicate with the database
-            performDatabaseUpdate(email, oldPass, newPass);
-        } catch (InvalidInputException ex) {
-            // Show custom error messages to the user
-            JOptionPane.showMessageDialog(this, ex.getMessage(), "Input Error", JOptionPane.WARNING_MESSAGE);
-        }
-    }
-
-    /**
-     * Connects to the DB to verify current credentials and apply the change.
-     */
-    private void performDatabaseUpdate(String email, String oldPass, String newPass) {
-        // Try-with-resources ensures the connection is closed automatically
-        try (Connection conn = DatabaseConnection.getConnection()) {
-
-            // Step 1: Verify if the user exists and the old password is correct
-            String verifyQuery = "SELECT password FROM users WHERE email = ?";
-            PreparedStatement vPst = conn.prepareStatement(verifyQuery);
-            vPst.setString(1, email);
-            ResultSet rs = vPst.executeQuery();
-
-            // Password check (Note: In production, passwords should be hashed, not compared as plain text)
-            if (rs.next() && rs.getString("password").equals(oldPass)) {
-
-                // Step 2: Update the record with the new password
-                String updateQuery = "UPDATE users SET password = ? WHERE email = ?";
-                PreparedStatement uPst = conn.prepareStatement(updateQuery);
-                uPst.setString(1, newPass);
-                uPst.setString(2, email);
-                uPst.executeUpdate();
-
+            if (passwordChangedSuccess) {
                 JOptionPane.showMessageDialog(this, "Password updated successfully!");
-
                 // Clean up and redirect user back to login
                 this.dispose();
                 new LoginForm().setVisible(true);
             } else {
                 JOptionPane.showMessageDialog(this, "Email or current password is incorrect.");
             }
-        } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(this, "Database error: " + ex.getMessage());
+        } catch (InvalidInputException ex) {
+            // Show custom error messages to the user
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Input Error", JOptionPane.WARNING_MESSAGE);
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Something went wrong. Please try again.");
         }
     }
 }
