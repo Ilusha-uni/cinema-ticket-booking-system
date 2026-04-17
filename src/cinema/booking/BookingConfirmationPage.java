@@ -3,33 +3,63 @@ package cinema.booking;
 
 // Import project-specific classes
 import cinema.auth.UserSession;
-import cinema.database.DatabaseConnection;
 import cinema.models.Movie;
 import cinema.models.Showtime;
+import cinema.dao.BookingDAO;
 
-// Import necessary libraries for GUI (Swing/AWT) and Database (SQL)
+// Import necessary libraries for GUI (Swing/AWT)
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.util.List;
-import java.sql.*;
+
 
 /**
- * BookingConfirmationPage handles the final step of the ticket purchase process.
- * It displays movie details, selected seats, and the total price, and handles database insertion.
+ * BookingConfirmationPage represents the final step in the cinema ticket booking process.
+ *
+ * Responsibilities:
+ * 1. Displays selected movie details: poster, title, showtime, hall, and selected seats.
+ * 2. Shows the total price for the selected seats.
+ * 3. Allows the user to confirm the booking and triggers database insertion.
+ * 4. Performs validation:
+ *    - Ensures the user is logged in.
+ *    - Checks that seats are still available (prevents double-booking).
+ * 5. Handles navigation:
+ *    - Back to seat selection if the user wants to change seats.
+ *    - Redirects to movie listing after successful booking.
  */
 public class BookingConfirmationPage extends JFrame {
-    // Member variables to store booking details passed from previous screens
-    private List<String> selectedSeats;     // e.g., ["A1", "A2"]
-    private List<Integer> selectedSeatIds;  // Database IDs for the seats
+    /** List of seat names selected by the user. */
+    private List<String> selectedSeats;
+
+    /** Database IDs for the selected seats. */
+    private List<Integer> selectedSeatIds;
+
+    /** Total price for the booking. */
     private double totalPrice;
+
+    /** Movie being booked. */
     private Movie movie;
+
+    /** Showtime of the selected movie. */
     private Showtime showtime;
+
+    /** Hall ID for seat selection. */
     private int hallId;
+
+    /** Screening ID for the showtime. */
     private int screeningId;
 
     /**
-     * Constructor: Initializes data and builds the UI components
+     * Constructs the booking confirmation page with all relevant booking details.
+     *
+     * @param selectedSeats Names of seats selected
+     * @param selectedSeatIds Database IDs of seats
+     * @param totalPrice Total price for selected seats
+     * @param movie Movie being booked
+     * @param showtime Selected showtime
+     * @param hallId Hall ID
+     * @param screeningId Screening ID
      */
     public BookingConfirmationPage(List<String> selectedSeats, List<Integer> selectedSeatIds, double totalPrice, Movie movie, Showtime showtime, int hallId, int screeningId) {
         this.selectedSeats = selectedSeats;
@@ -39,15 +69,25 @@ public class BookingConfirmationPage extends JFrame {
         this.showtime = showtime;
         this.hallId = hallId;
         this.screeningId = screeningId;
+        setupWindow();
+        setupTopBar();
+        setupMainContent();
+    }
 
+    /**
+     * Configures the basic JFrame properties: title, size, close operation, and layout.
+     */
+    private void setupWindow() {
         // Window basic configuration
         setTitle("Confirm Booking");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1300, 800);
-        setLocationRelativeTo(null); // Centers the window on screen
+        setLocationRelativeTo(null);
         setLayout(new BorderLayout());
+    }
 
-        // --- TOP NAV BAR ---
+    /** Sets up the top navigation bar with a back button. */
+    private void setupTopBar() {
         // Creates a black header containing a "Back" button
         JPanel topBar = new JPanel(new FlowLayout(FlowLayout.LEFT));
         topBar.setBackground(Color.BLACK);
@@ -63,8 +103,10 @@ public class BookingConfirmationPage extends JFrame {
 
         topBar.add(backBtn);
         add(topBar, BorderLayout.NORTH);
+    }
 
-        // --- MAIN CONTENT ---
+    /** Sets up the main content area showing movie info, seats, price, and confirm button. */
+    private void setupMainContent() {
         // Container for movie details and payment actions
         JPanel content = new JPanel();
         content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
@@ -72,25 +114,8 @@ public class BookingConfirmationPage extends JFrame {
         content.setBackground(Color.WHITE);
 
         // --- Poster Image Logic ---
-        JLabel posterLabel = new JLabel();
-        posterLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        // Determine which file to load
-        String fileName = (movie.getImagePath() == null ? "default.jpg" : movie.getImagePath());
-        // Try to load image from resources
-        java.net.URL resource = getClass().getResource("/images/" + fileName);
-        // Fallback to default image if requested one is missing
-        if (resource == null) {
-            resource = getClass().getResource("/images/default.jpg");
-        }
-        // Fail fast if even default image is missing
-        if (resource == null) {
-            throw new RuntimeException("Image not found: " + fileName);
-        }
-        // Load and scale the image
-        Image img = new ImageIcon(resource).getImage().getScaledInstance(180, 260, Image.SCALE_SMOOTH);
-        posterLabel.setIcon(new ImageIcon(img));
+        JLabel posterLabel = loadPosterImage();
 
-        // --- Information Labels ---
         // Displaying Title, Show details, and Total Price
         JLabel title = createLabel(movie.getTitle(), new Font("SansSerif", Font.BOLD, 28), Color.BLACK);
         JLabel info = createLabel(showtime.getStartTime() + " | Seats: " + String.join(", ", selectedSeats),
@@ -125,9 +150,34 @@ public class BookingConfirmationPage extends JFrame {
     }
 
     /**
-     * Helper method to reduce boilerplate code for creating styled labels
+     * Loads and scales the movie poster image.
+     *
+     * @return JLabel containing the movie poster
      */
-    private JLabel createLabel(String text, Font font, Color color) {
+    private JLabel loadPosterImage () {
+        JLabel posterLabel = new JLabel();
+        posterLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        // Determine which file to load
+        String fileName = (movie.getImagePath() == null ? "default.jpg" : movie.getImagePath());
+        // Try to load image from resources
+        java.net.URL resource = getClass().getResource("/images/" + fileName);
+        // Fallback to default image if requested one is missing
+        if (resource == null) resource = getClass().getResource("/images/default.jpg");
+        // Fail fast if even default image is missing
+        if (resource == null) throw new RuntimeException("Image not found: " + fileName);
+
+        // Load and scale the image
+        Image img = new ImageIcon(resource).getImage().getScaledInstance(180, 260, Image.SCALE_SMOOTH);
+        posterLabel.setIcon(new ImageIcon(img));
+
+        return posterLabel;
+    }
+
+    /**
+     * Creates a JLabel with specified text, font, color, and center alignment.
+     */
+    private JLabel createLabel (String text, Font font, Color color){
         JLabel l = new JLabel(text);
         l.setFont(font);
         l.setForeground(color);
@@ -137,56 +187,44 @@ public class BookingConfirmationPage extends JFrame {
     }
 
     /**
-     * core Logic: Validates user session, checks for double-booking, and inserts records into DB
+     * Validates user session, checks for double-booking, and inserts records into DB
      */
     private void confirmBooking() {
-        // 1. Security check: User must be logged in
+        // Ensure the user is logged in before allowing any booking.
         if (!UserSession.isLoggedIn()) {
             JOptionPane.showMessageDialog(this, "Please log in to continue.");
-            return;
+            return; // Exit method if user is not authenticated
         }
 
-        // 2. Final confirmation prompt
+        // Ask the user to confirm payment; returns YES or NO
         int choice = JOptionPane.showConfirmDialog(this, "Confirm payment?", "Payment", JOptionPane.YES_NO_OPTION);
-        if (choice != JOptionPane.YES_OPTION) return;
+        if (choice != JOptionPane.YES_OPTION) return; // User declined, cancel booking
 
-        try (Connection conn = DatabaseConnection.getConnection()) {
-            // 3. Race Condition Check: Ensure seats weren't booked by another user while this page was open
-            String checkSQL = "SELECT COUNT(*) FROM tickets WHERE screening_id = ? AND seat_id = ? AND status = 'BOOKED'";
-            try (PreparedStatement checkStmt = conn.prepareStatement(checkSQL)) {
-                for (int sid : selectedSeatIds) {
-                    checkStmt.setInt(1, showtime.getId());
-                    checkStmt.setInt(2, sid);
-                    ResultSet rs = checkStmt.executeQuery();
-                    if (rs.next() && rs.getInt(1) > 0) {
-                        JOptionPane.showMessageDialog(this, "One of your seats was just taken!");
-                        return;
-                    }
-                }
-            }
+        // BookingDAO handles all database interactions related to ticket bookings
+        BookingDAO bookingDAO = new BookingDAO();
 
-            // 4. Database Insertion: Record the booking for each seat
-            String insertSQL = "INSERT INTO tickets (user_id, screening_id, seat_id, status) VALUES (?, ?, ?, 'BOOKED')";
-            try (PreparedStatement insertStmt = conn.prepareStatement(insertSQL)) {
-                for (int sid : selectedSeatIds) {
-                    insertStmt.setInt(1, UserSession.getUserId());
-                    insertStmt.setInt(2, showtime.getId());
-                    insertStmt.setInt(3, sid);
-                    insertStmt.executeUpdate();
-                }
-                JOptionPane.showMessageDialog(this, "Booking Confirmed! Enjoy your movie!");
-                this.dispose(); // Close the confirmation page(this window)
-                new MovieListingPage().setVisible(true); // Redirect to movie listing
-            }
-        } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(this, "Database Error: " + ex.getMessage());
+        // Prevents race conditions where another user might have booked a seat
+        if (bookingDAO.areSeatsBooked(showtime.getId(), selectedSeatIds)) {
+            JOptionPane.showMessageDialog(this, "One of your seats was just taken!");
+            return;
+        }
+        // Inserts booking records into the database for all selected seats
+        boolean booked = bookingDAO.bookSeats(UserSession.getUserId(), showtime.getId(), selectedSeatIds);
+        if (booked) {
+            // Booking successful
+            JOptionPane.showMessageDialog(this, "Booking Confirmed! Enjoy your movie!");
+            this.dispose(); // Close the confirmation page(this window)
+            new MovieListingPage().setVisible(true); // Redirect to movie listing
+        } else {
+            // Booking failed
+            JOptionPane.showMessageDialog(this, "Booking failed. Please try again.", "Booking Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
     /**
      * Navigation: Closes current page and re-opens the Seat Selection page
      */
-    private void goBackToSeats() {
+    private void goBackToSeats () {
         new SeatSelectionPage(hallId, movie.getId(), screeningId, selectedSeats).setVisible(true);
         this.dispose();
     }
