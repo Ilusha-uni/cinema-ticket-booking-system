@@ -1,31 +1,33 @@
+// Package declaration
 package cinema.panels;
+
+// Import necessary libraries for GUI (Swing/AWT)
 import javax.swing.*;
 import java.awt.*;
 
+/**
+ * AdminPanel represents the main window for cinema administrators.
+ * It contains tabs for managing various parts of the system (e.g., Users, Movies, Showtimes).
+ */
 public class AdminPanel extends JFrame {
 
+    /**
+     * Constructs the AdminPanel window and sets up its components.
+     */
     public AdminPanel() {
-        // Set the window properties
+        // Set the window title
         setTitle("Cinema Admin Panel");
+        // Set the window size
         setSize(1200, 700);
+        // Ensure the application exits when this window is closed
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLocationRelativeTo(null);  // Center the window on the screen
-
-        // Create a JTabbedPane to hold the tabs (each panel will be a tab)
+        // Center the window on the screen
+        setLocationRelativeTo(null);
+        // Create a tabbed pane to hold different management sections
         JTabbedPane tabbedPane = new JTabbedPane();
-
-        // Add tab for the admin panel
+        // Add a tab for managing users
         tabbedPane.addTab("Users", new UsersPanel());
-
-        // Add the tabbedPane to the frame
-        add(tabbedPane, BorderLayout.CENTER);  // Main content in the center
-    }
-
-    public static void main(String[] args) {
-        // Create and display the AdminPanel when the program starts
-        SwingUtilities.invokeLater(() -> {
-            AdminPanel adminPanel = new AdminPanel();
-            adminPanel.setVisible(true);  // Make the window visible
-        });
+                // Add the tabbed pane to the center of the frame
+        add(tabbedPane, BorderLayout.CENTER);
     }
 }
