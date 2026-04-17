@@ -28,11 +28,16 @@ public class LoginForm extends JFrame {
     private Font fieldFont = new Font("Segoe UI", Font.PLAIN, 16);
 
     public LoginForm() {
+        setupWindow();
+        setupMainContent();
+    }
+    private void setupWindow() {
         // Basic window setup
         setTitle("Login");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         getContentPane().setBackground(Color.WHITE);
-
+    }
+    private void setupMainContent() {
         // Main container: Uses BorderLayout and adds padding (EmptyBorder)
         JPanel mainContent = new JPanel(new BorderLayout(15, 20));
         mainContent.setBackground(Color.WHITE);
