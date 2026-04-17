@@ -4,22 +4,23 @@ package cinema.booking;
 // Import project-specific classes
 import cinema.auth.LoginForm;
 import cinema.auth.UserSession;
-import cinema.database.DatabaseConnection;
 import cinema.models.Movie;
+import cinema.dao.MovieDAO;
 
-// Import necessary libraries for GUI (Swing/AWT) and Database (SQL)
-// and utility classes for data collection
+// Import necessary libraries for GUI (Swing/AWT) and utility classes
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.sql.*;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
  * MovieListingPage Class
- * This class represents the main dashboard where users can view available movies.
- * It extends JFrame to create a top-level window.
+ *
+ * Represents the main dashboard where users can view available movies.
+ * Responsibilities:
+ * - Display a list of movies retrieved from the database.
+ * - Provide a top navigation bar with a logout button.
+ * - Allow navigation to the showtimes page for each movie.
  */
 public class MovieListingPage extends JFrame {
 
@@ -27,135 +28,148 @@ public class MovieListingPage extends JFrame {
     private JPanel moviePanel;
 
     // Constant colors for a consistent UI theme
-    private static final Color NAV_BAR_COLOR = new Color(18, 18, 18); // Dark color for top nav
-    private static final Color PRIMARY_BLUE = new Color(34, 150, 243); // Primary action color
-    private final Color BACKGROUND_COLOR = new Color(240, 240, 240); // Light grey background
+    private static final Color NAV_BAR_COLOR = new Color(18, 18, 18); // Dark top navigation bar
+    private static final Color PRIMARY_BLUE = new Color(34, 150, 243); // Primary button color
+    private final Color BACKGROUND_COLOR = new Color(240, 240, 240); // Background color for main content
 
     /**
-     * Constructor for the MovieListingPage
-     * Initializes the window settings and builds the UI components.
+     * Constructor for MovieListingPage.
+     * Initializes the JFrame window and all UI components.
      */
     public MovieListingPage() {
-        // Set the window title
+        setupWindow();          // Configure basic window properties
+        setupNavigationBar();   // Add top navigation bar with logout
+        setupMainContent();     // Add movie list panel with scroll
+    }
+
+    /**
+     * Configures the basic JFrame properties: title, size, close operation, and background.
+     */
+    private void setupWindow() {
         setTitle("Movie Listings");
-        // Ensure the application exits when the window is closed
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        // Set initial window dimensions
-        setSize(1300, 800);
-        // Center the window on the screen
-        setLocationRelativeTo(null);
-
-        // Set the background color of the main content pane
+        setSize(1300, 800);                // Initial window dimensions
+        setLocationRelativeTo(null);       // Center window on the screen
         getContentPane().setBackground(BACKGROUND_COLOR);
+    }
 
-        // --- Top Black Navigation Bar ---
-        // Create a panel for the logout button at the top
+    /**
+     * Sets up the top navigation bar containing a logout button.
+     * Adds the panel to the JFrame.
+     */
+    private void setupNavigationBar() {
+        // Create top panel with FlowLayout for left-aligned logout button
         JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         topPanel.setBackground(NAV_BAR_COLOR);
         topPanel.setPreferredSize(new Dimension(getWidth(), 35));
 
-        // Initialize logout button with styling
+        // Create and style logout button
         JButton logoutBtn = new JButton("← Logout");
         logoutBtn.setForeground(Color.WHITE);
         logoutBtn.setBackground(NAV_BAR_COLOR);
         logoutBtn.setBorderPainted(false);
         logoutBtn.setFocusPainted(false);
         logoutBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        // Action listener to handle logout logic
-        logoutBtn.addActionListener(e -> logout());
-        topPanel.add(logoutBtn);
-        // Add the top bar to the North section of the layout
-        add(topPanel, BorderLayout.NORTH);
+        logoutBtn.addActionListener(e -> logout()); // Handle logout action
 
-        // --- Main List Area ---
-        // Create the panel that will vertically stack the movies
+        // Add button to top panel and attach panel to JFrame
+        topPanel.add(logoutBtn);
+        add(topPanel, BorderLayout.NORTH);
+    }
+
+    /**
+     * Sets up the main content area where movie cards will be displayed.
+     * Uses a vertical BoxLayout inside a scroll pane.
+     */
+    private void setupMainContent() {
+        // Create vertical stacking panel for movie cards
         moviePanel = new JPanel();
         moviePanel.setLayout(new BoxLayout(moviePanel, BoxLayout.Y_AXIS));
         moviePanel.setBackground(BACKGROUND_COLOR);
 
-        // Fetch movies from database and add a visual card for each movie
-        for (Movie m : getAllMovies()) {
-            moviePanel.add(createMovieCard(m));
-        }
+        // Populate panel with movie cards from the database
+        populateMovies();
 
-        // Wrap the movie panel in a scroll pane for navigation through the list
+        // Wrap the movie panel in a scroll pane for vertical navigation
         JScrollPane scrollPane = new JScrollPane(moviePanel);
-        scrollPane.getVerticalScrollBar().setUnitIncrement(16); // Increase scroll speed/smoothness
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16); // Smooth scrolling
         scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        scrollPane.setBorder(null); // Remove default border for a cleaner look
+        scrollPane.setBorder(null); // Clean look without borders
         add(scrollPane, BorderLayout.CENTER);
 
-        // Use invokeLater to ensure the scroll bar resets to the top after the UI renders
-        SwingUtilities.invokeLater(() -> {
-            scrollPane.getVerticalScrollBar().setValue(0);
-        });
+        // Ensure scroll bar starts at the top after UI renders
+        SwingUtilities.invokeLater(() -> scrollPane.getVerticalScrollBar().setValue(0));
     }
 
+    /**
+     * Retrieves all movies from the database and adds a visual card for each to the moviePanel.
+     */
+    private void populateMovies() {
+        MovieDAO movieDAO = new MovieDAO();
+        List<Movie> movies = movieDAO.getAllMovies();
+        for (Movie m : movies) {
+            moviePanel.add(createMovieCard(m));
+        }
+    }
 
-    // Loads an image from the resources
+    /**
+     * Loads and scales an image from the resources folder.
+     *
+     * @param imagePath Relative path to the image (inside /images/)
+     * @param width Desired width for display
+     * @param height Desired height for display
+     * @return Scaled ImageIcon ready to be used in JLabels
+     */
     private ImageIcon loadResourceImage(String imagePath, int width, int height) {
-        // Choose the file name, fallback to default if null
         String fileName = (imagePath == null ? "default.jpg" : imagePath);
-        // Try to get the image from classpath
         java.net.URL resource = getClass().getResource("/images/" + fileName);
-        // If not found, fallback to default image
-        if (resource == null) resource = getClass().getResource("/images/default.jpg");
-        // Convert the URL resource to an Image object
+        if (resource == null) resource = getClass().getResource("/images/default.jpg"); // fallback
         Image img = new ImageIcon(resource).getImage();
-        // Scale the image smoothly and return as ImageIcon
         return new ImageIcon(img.getScaledInstance(width, height, Image.SCALE_SMOOTH));
     }
 
     /**
-     * Creates a stylized JPanel (card) representing a single movie.
-     * @param movie The movie object containing data.
-     * @return A JPanel configured with movie info.
+     * Creates a JPanel card representing a single movie.
+     * The card includes poster, title, description, metadata, and a button to view showtimes.
+     *
+     * @param movie The Movie object containing all necessary data
+     * @return JPanel representing a movie card
      */
     private JPanel createMovieCard(Movie movie) {
-        // Create card with a BorderLayout and spacing
-        JPanel card = new JPanel(new BorderLayout(15, 0));
-        // Add a bottom border for separation and internal padding
+        JPanel card = new JPanel(new BorderLayout(15, 0)); // Horizontal spacing between sections
         card.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createMatteBorder(0, 0, 1, 0, Color.LIGHT_GRAY),
-                new EmptyBorder(15, 15, 15, 15)));
+                BorderFactory.createMatteBorder(0, 0, 1, 0, Color.LIGHT_GRAY), // Bottom separator
+                new EmptyBorder(15, 15, 15, 15) // Internal padding
+        ));
         card.setBackground(BACKGROUND_COLOR);
 
-        // 1. Movie Poster Section
+        // 1. Movie Poster Section (WEST)
         ImageIcon icon = loadResourceImage(movie.getImagePath(), 130, 150);
         JLabel posterLabel = new JLabel(icon);
         card.add(posterLabel, BorderLayout.WEST);
 
-        // 2. Info Panel Section
+        // 2. Movie Info Section (CENTER)
         JPanel infoPanel = new JPanel();
         infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
         infoPanel.setBackground(BACKGROUND_COLOR);
 
-        // Movie Title styling
+        // Movie Title
         JLabel titleLabel = new JLabel(movie.getTitle());
         titleLabel.setFont(new Font("SansSerif", Font.BOLD, 20));
         titleLabel.setForeground(Color.BLACK);
         titleLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         infoPanel.add(titleLabel);
-        infoPanel.add(Box.createRigidArea(new Dimension(0, 5))); // Vertical spacer
+        infoPanel.add(Box.createRigidArea(new Dimension(0, 5))); // Spacer
 
-        // Movie Description styling (uses JTextArea for multi-line support)
-        JTextArea descriptionArea = new JTextArea(movie.getDescription());
-        descriptionArea.setFont(new Font("SansSerif", Font.PLAIN, 15));
-        descriptionArea.setForeground(new Color(60, 60, 60));
-        descriptionArea.setEditable(false);
-        descriptionArea.setLineWrap(true);
-        descriptionArea.setWrapStyleWord(true);
-        descriptionArea.setBackground(BACKGROUND_COLOR);
-        descriptionArea.setAlignmentX(Component.LEFT_ALIGNMENT);
-        descriptionArea.setMaximumSize(new Dimension(550, 80));
+        // Movie Description (multi-line)
+        JTextArea descriptionArea = getJTextArea(movie);
         infoPanel.add(descriptionArea);
 
-        // Metadata Panel (Duration, Rating, Date)
+        // Metadata: Duration, Rating, Release Date
         JPanel infoDetailsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 5));
         infoDetailsPanel.setBackground(BACKGROUND_COLOR);
         infoDetailsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-
         String movieInfo = "🕒 " + movie.getDuration() + " min  |  ⭐ " + movie.getRating() + "  |  📅 " + movie.getReleaseDate();
         JLabel infoLabel = new JLabel(movieInfo);
         infoLabel.setFont(new Font("SansSerif", Font.BOLD, 13));
@@ -165,8 +179,8 @@ public class MovieListingPage extends JFrame {
 
         card.add(infoPanel, BorderLayout.CENTER);
 
-        // 3. Action Button Section
-        JPanel btnContainer = new JPanel(new GridBagLayout()); // Use GridBag to center button vertically
+        // 3. Action Button Section (EAST)
+        JPanel btnContainer = new JPanel(new GridBagLayout()); // Center vertically
         btnContainer.setBackground(BACKGROUND_COLOR);
         JButton btn = new JButton("Watch Showtimes");
         btn.setBackground(PRIMARY_BLUE);
@@ -174,64 +188,51 @@ public class MovieListingPage extends JFrame {
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btn.setFocusPainted(false);
         btn.setPreferredSize(new Dimension(140, 150));
-        // Action listener to switch to showtimes view
-        btn.addActionListener(e -> openShowtimesPage(movie.getId()));
+        btn.addActionListener(e -> openShowtimesPage(movie.getId())); // Navigate to showtimes page
         btnContainer.add(btn);
-
         card.add(btnContainer, BorderLayout.EAST);
+
         // Constrain card size for layout consistency
         card.setMaximumSize(new Dimension(900, 700));
-
         return card;
     }
 
     /**
-     * Connects to the database and retrieves all movie records.
-     * @return A list of Movie objects.
+     * Helper method to create a multi-line JTextArea for movie descriptions.
+     *
+     * @param movie Movie object
+     * @return Configured JTextArea
      */
-    private List<Movie> getAllMovies() {
-        List<Movie> movies = new ArrayList<>();
-        // Use try-with-resources for automatic closing of DB connections
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pst = conn.prepareStatement("SELECT * FROM movies");
-             ResultSet rs = pst.executeQuery()) {
-
-            // Map each result row to a Movie object
-            while (rs.next()) {
-                movies.add(new Movie(
-                        rs.getInt("id"),
-                        rs.getString("title"),
-                        rs.getString("description"),
-                        rs.getInt("duration_minutes"),
-                        rs.getDouble("rating"),
-                        rs.getString("release_date"),
-                        rs.getString("image_path")
-                ));
-            }
-        } catch (SQLException ex) {
-            // Show error message if database interaction fails
-            JOptionPane.showMessageDialog(this, "Database Error: " + ex.getMessage());
-        }
-        return movies;
+    private JTextArea getJTextArea(Movie movie) {
+        JTextArea descriptionArea = new JTextArea(movie.getDescription());
+        descriptionArea.setFont(new Font("SansSerif", Font.PLAIN, 15));
+        descriptionArea.setForeground(new Color(60, 60, 60));
+        descriptionArea.setEditable(false);
+        descriptionArea.setLineWrap(true);
+        descriptionArea.setWrapStyleWord(true);
+        descriptionArea.setBackground(BACKGROUND_COLOR);
+        descriptionArea.setAlignmentX(Component.LEFT_ALIGNMENT);
+        descriptionArea.setMaximumSize(new Dimension(550, 80));
+        return descriptionArea;
     }
 
     /**
-     * Navigates to the WatchShowtimesPage for a specific movie.
-     * @param movieId ID of the selected movie.
+     * Opens the WatchShowtimesPage for the given movie.
+     *
+     * @param movieId ID of the selected movie
      */
     private void openShowtimesPage(int movieId) {
         new WatchShowtimesPage(movieId).setVisible(true);
-        this.dispose(); // Close the current listing page
+        this.dispose(); // Close current window to avoid duplicates
     }
 
     /**
-     * Clears user session and returns to the Login Form.
+     * Logs out the current user and returns to the login form.
      */
     private void logout() {
-        UserSession.logout();
+        UserSession.logout(); // Clear user session
         JOptionPane.showMessageDialog(this, "Logged out successfully.");
-        new LoginForm().setVisible(true);
+        new LoginForm().setVisible(true); // Show login page
         this.dispose(); // Close current window
     }
-
 }
