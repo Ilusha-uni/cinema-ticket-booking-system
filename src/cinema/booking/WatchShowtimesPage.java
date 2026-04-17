@@ -2,12 +2,13 @@
 package cinema.booking;
 
 // Import project-specific classes
-import cinema.database.DatabaseConnection;
+import cinema.dao.MovieDAO;
+import cinema.dao.ShowtimeDAO;
 import cinema.models.Movie;
 import cinema.models.Showtime;
 
-// Import necessary libraries for GUI (Swing/AWT) and Database (SQL)
-// and utility classes for data collection and File class
+// Import necessary libraries for GUI (Swing/AWT)
+// and utility classes for data collection
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
@@ -19,113 +20,148 @@ import java.util.List;
 /**
  * WatchShowtimesPage class represents a window that displays available
  * screening times for a specific movie selected by the user.
+ *
+ * Responsibilities:
+ * 1. Fetch the selected movie's details from the database (MovieDAO).
+ * 2. Fetch all scheduled showtimes for that movie (ShowtimeDAO).
+ * 3. Build a vertical layout with movie header and showtime rows.
+ * 4. Provide navigation back to the movie listing page.
+ * 5. Allow the user to select a showtime and proceed to seat selection.
  */
 public class WatchShowtimesPage extends JFrame {
 
     // Unique identifier for the selected movie
     private final int movieId;
-    // UI Constants for consistent styling (Colors)
-    private final Color BACKGROUND_COLOR = new Color(240, 240, 240);
-    private final Color NAV_BAR_COLOR = new Color(18, 18, 18);
-    private static final Color PRIMARY_BLUE = new Color(34, 150, 243);
+
+    // UI Constants for consistent styling
+    private final Color BACKGROUND_COLOR = new Color(240, 240, 240); // Light grey background
+    private final Color NAV_BAR_COLOR = new Color(18, 18, 18);       // Dark top nav
+    private static final Color PRIMARY_BLUE = new Color(34, 150, 243); // Action button color
 
     /**
-     * Constructor for the Showtimes Page.
-     * Initializes the frame and builds the user interface.
+     * Constructor for the WatchShowtimesPage.
+     * Initializes the frame and builds the UI components.
+     *
+     * @param movieId The ID of the movie for which to show showtimes.
      */
     public WatchShowtimesPage(int movieId) {
         this.movieId = movieId;
+        setupWindow();          // Configure the main JFrame
+        setupNavigationBar();   // Add the top navbar with Back button
+        setupMainContent();     // Build movie header and showtime list
+    }
 
-        // Window basic configuration
+    /**
+     * Configures the main JFrame window.
+     */
+    private void setupWindow() {
         setTitle("Movie Showtimes");
-        setSize(1300, 800);
+        setSize(1300, 800);                // Fixed window size
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLocationRelativeTo(null);
-        setLayout(new BorderLayout());
+        setLocationRelativeTo(null);       // Center on screen
+        setLayout(new BorderLayout());     // Main layout for header + content
+    }
 
-        // --- 1. Black Top Navigation Bar ---
+    /**
+     * Sets up the top navigation bar.
+     * Contains a back button that returns to the movie listing page.
+     */
+    private void setupNavigationBar() {
         JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         topPanel.setBackground(NAV_BAR_COLOR);
         topPanel.setPreferredSize(new Dimension(getWidth(), 35));
 
-        // Create and configure the back button
         JButton backBtn = new JButton("← Back to Movies");
         backBtn.setForeground(Color.WHITE);
         backBtn.setBackground(NAV_BAR_COLOR);
         backBtn.setBorderPainted(false);
         backBtn.setFocusPainted(false);
         backBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        // Clicking navigates back to the main movie listing page
         backBtn.addActionListener(e -> backToMovies());
+
         topPanel.add(backBtn);
+        add(topPanel, BorderLayout.NORTH); // Add navbar at top
+    }
 
-        // Add navbar to the top of the frame
-        add(topPanel, BorderLayout.NORTH);
-
-        // --- 2. Content Container ---
+    /**
+     * Builds the main content area.
+     * Fetches movie and showtime data from DAOs and creates UI components.
+     */
+    private void setupMainContent() {
+        // Main content panel: vertical layout, padding, background color
         JPanel mainContent = new JPanel();
         mainContent.setLayout(new BoxLayout(mainContent, BoxLayout.Y_AXIS));
         mainContent.setBackground(BACKGROUND_COLOR);
         mainContent.setBorder(new EmptyBorder(20, 20, 20, 20));
 
-        // Fetch movie details from database and add header if data exists
-        Movie movie = getMovieDetails(movieId);
+        // --- 1. Movie Header Section ---
+        // DAO (Data Access Object) fetches movie from database
+        MovieDAO movieDAO = new MovieDAO();
+        Movie movie = movieDAO.getMovieById(movieId);
+
         if (movie != null) {
+            // If the movie exists, add a header panel with poster, title, metadata, description
             mainContent.add(createSimpleHeader(movie));
             mainContent.add(Box.createRigidArea(new Dimension(0, 20))); // Vertical spacing
         }
 
-        // --- 3. Showtimes List ---
-        // Fetch list of screenings for this movie
-        List<Showtime> showtimes = getShowtimesForMovie(movieId);
+        // --- 2. Showtimes List Section ---
+        // DAO fetches all scheduled showtimes for this movie
+        ShowtimeDAO showtimeDAO = new ShowtimeDAO();
+        List<Showtime> showtimes = showtimeDAO.getShowtimesByMovieId(movieId);
+
         if (showtimes.isEmpty()) {
-            // Display message if no screenings are scheduled
+            // No showtimes scheduled: display informative message
             mainContent.add(new JLabel("No showtimes available."));
         } else {
-            // Loop through each showtime and add a row to the UI
+            // Add a row for each showtime: time, hall, price, selection button
             for (Showtime s : showtimes) {
                 mainContent.add(createSimpleShowtimeRow(s));
                 mainContent.add(Box.createRigidArea(new Dimension(0, 15))); // Spacing between rows
             }
         }
-        // Add the content inside a scroll pane for long lists
+
+        // Wrap main content in a scroll pane for long lists of showtimes
         add(new JScrollPane(mainContent), BorderLayout.CENTER);
     }
 
     /**
-     * Creates a header panel displaying the movie poster, title, and metadata.
+     * Creates a header panel displaying movie poster, title, metadata, and description.
+     *
+     * @param movie The movie object containing all necessary data.
+     * @return A JPanel configured as a header for the movie.
      */
     private JPanel createSimpleHeader(Movie movie) {
         JPanel header = new JPanel(new BorderLayout(20, 0));
-        header.setOpaque(false); // Make transparent to show background
+        header.setOpaque(false);
         header.setMaximumSize(new Dimension(1000, 200));
 
-        // Load and display movie poster
+        // Movie poster on the left
         JLabel poster = new JLabel(loadImage(movie.getImagePath()));
         header.add(poster, BorderLayout.WEST);
 
-        // Text information panel
+        // Info panel: title, metadata, description
         JPanel info = new JPanel(new GridLayout(3, 1));
         info.setOpaque(false);
 
-        // Title styling
         JLabel title = new JLabel(movie.getTitle());
         title.setFont(new Font("SansSerif", Font.BOLD, 20));
 
-        // Create movieInfo string
-        String movieInfo = "🕒 " + movie.getDuration() + " min  |  ⭐ " + movie.getRating() + "  |  📅 " + movie.getReleaseDate();
-        // Create a JLabel for the movieInfo
+        String movieInfo = "🕒 " + movie.getDuration() + " min  |  ⭐ "
+                + movie.getRating() + "  |  📅 " + movie.getReleaseDate();
         JLabel infoLabel = new JLabel(movieInfo);
-        infoLabel.setFont(new Font("SansSerif", Font.BOLD, 18)); // Use the same font size for consistency
-        // Add the infoLabel to the panel
-        info.add(infoLabel);
-        // Description area with word wrapping
+        infoLabel.setFont(new Font("SansSerif", Font.BOLD, 18));
+
         JTextArea desc = new JTextArea(movie.getDescription());
         desc.setFont(new Font("SansSerif", Font.PLAIN, 16));
         desc.setWrapStyleWord(true);
         desc.setLineWrap(true);
         desc.setEditable(false);
         desc.setOpaque(false);
-        // Add other components to the panel
+
+        // Add components to info panel
         info.add(title);
         info.add(infoLabel);
         info.add(desc);
@@ -135,7 +171,11 @@ public class WatchShowtimesPage extends JFrame {
     }
 
     /**
-     * Creates a row for a single showtime including time, price, and selection button.
+     * Creates a row for a single showtime.
+     * Includes showtime start, hall number, price, and a "Select Seats" button.
+     *
+     * @param s The showtime object.
+     * @return JPanel representing the showtime row.
      */
     private JPanel createSimpleShowtimeRow(Showtime s) {
         JPanel row = new JPanel(new BorderLayout(15, 0));
@@ -144,16 +184,13 @@ public class WatchShowtimesPage extends JFrame {
                 new LineBorder(Color.LIGHT_GRAY), new EmptyBorder(10, 15, 10, 15)));
         row.setMaximumSize(new Dimension(1000, 70));
 
-        // Showtime and Hall ID text
         JLabel time = new JLabel(s.getStartTime() + " - Hall " + s.getHallId());
         time.setFont(new Font("SansSerif", Font.BOLD, 20));
 
-        // Price display formatted to 2 decimal places
         JLabel price = new JLabel("€" + String.format("%.2f", s.getPrice()));
         price.setFont(new Font("SansSerif", Font.BOLD, 20));
-        price.setForeground(new Color(0, 153, 51)); // Green color for price
+        price.setForeground(new Color(0, 153, 51)); // Green color
 
-        // Selection button
         JButton btn = new JButton("Select Seats");
         btn.setBackground(PRIMARY_BLUE);
         btn.setForeground(Color.WHITE);
@@ -172,75 +209,42 @@ public class WatchShowtimesPage extends JFrame {
     }
 
     /**
-     * Retrieves Movie data from the database using the movie ID.
-     */
-    private Movie getMovieDetails(int movieId) {
-        try (Connection conn = DatabaseConnection.getConnection()) {
-            String query = "SELECT * FROM movies WHERE id = ?";
-            PreparedStatement pst = conn.prepareStatement(query);
-            pst.setInt(1, movieId);
-            ResultSet rs = pst.executeQuery();
-            if (rs.next()) {
-                return new Movie(rs.getInt("id"), rs.getString("title"), rs.getString("description"),
-                        rs.getInt("duration_minutes"), rs.getDouble("rating"),
-                        rs.getString("release_date"), rs.getString("image_path"));
-            }
-        } catch (SQLException ex) { ex.printStackTrace(); }
-        return null;
-    }
-
-    /**
-     * Retrieves all showtimes (screenings) for a specific movie ID, ordered by time.
-     */
-    private List<Showtime> getShowtimesForMovie(int movieId) {
-        List<Showtime> showtimes = new ArrayList<>();
-        try (Connection conn = DatabaseConnection.getConnection()) {
-            String query = "SELECT * FROM screenings WHERE movie_id = ? ORDER BY start_time ASC";
-            PreparedStatement pst = conn.prepareStatement(query);
-            pst.setInt(1, movieId);
-            ResultSet rs = pst.executeQuery();
-            while (rs.next()) {
-                showtimes.add(new Showtime(rs.getInt("id"), rs.getInt("movie_id"),
-                        rs.getInt("hall_id"), rs.getString("start_time"), rs.getDouble("price")));
-            }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        }
-        return showtimes;
-    }
-
-    /**
-     * Safely loads an image file and scales it for the UI.
+     * Loads and scales a movie poster image from resources.
+     * Fallbacks to default image if missing.
+     *
+     * @param imagePath Relative path to the image file.
+     * @return Scaled ImageIcon to display in the UI.
      */
     private ImageIcon loadImage(String imagePath) {
-        // choose file name or fallback to default
         String fileName = (imagePath == null ? "default.jpg" : imagePath);
-        // try to load image from classpath (/images folder inside IDE or JAR)
         java.net.URL resource = getClass().getResource("/images/" + fileName);
-        // fallback to default image if requested one is missing
         if (resource == null) {
             resource = getClass().getResource("/images/default.jpg");
         }
-        // fail fast if even default image is not found
         if (resource == null) {
             throw new RuntimeException("Image not found: " + fileName);
         }
-        // convert URL resource to Image object
         Image img = new ImageIcon(resource).getImage();
-        // scale image smoothly and return as ImageIcon
         return new ImageIcon(img.getScaledInstance(130, 180, Image.SCALE_SMOOTH));
     }
 
     /**
-     * Closes current page and opens the seat selection screen.
+     * Opens the seat selection page for the given showtime.
+     *
+     * @param showtime The selected showtime.
      */
     private void selectSeat(Showtime showtime) {
-        new SeatSelectionPage(showtime.getHallId(), showtime.getMovieId(), showtime.getId(), new ArrayList<String>()).setVisible(true);
+        new SeatSelectionPage(
+                showtime.getHallId(),
+                showtime.getMovieId(),
+                showtime.getId(),
+                new ArrayList<String>()
+        ).setVisible(true);
         this.dispose();
     }
 
     /**
-     * Closes current page and returns to the movie list screen.
+     * Navigates back to the movie listing page.
      */
     private void backToMovies() {
         new MovieListingPage().setVisible(true);
