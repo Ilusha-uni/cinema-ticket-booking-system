@@ -18,8 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * WatchShowtimesPage class represents a window that displays available
- * screening times for a specific movie selected by the user.
+ * Represents a window that displays available screening times for a specific movie selected by the user.
  *
  * Responsibilities:
  * 1. Fetch the selected movie's details from the database (MovieDAO).
@@ -30,13 +29,25 @@ import java.util.List;
  */
 public class WatchShowtimesPage extends JFrame {
 
-    // Unique identifier for the selected movie
+    /**
+     * Unique identifier of the selected movie.
+     */
     private final int movieId;
 
-    // UI Constants for consistent styling
-    private final Color BACKGROUND_COLOR = new Color(240, 240, 240); // Light grey background
-    private final Color NAV_BAR_COLOR = new Color(18, 18, 18);       // Dark top nav
-    private static final Color PRIMARY_BLUE = new Color(34, 150, 243); // Action button color
+    /**
+     * Background color used in the UI.
+     */
+    private final Color BACKGROUND_COLOR = new Color(240, 240, 240);
+
+    /**
+     * Color used for the top navigation bar.
+     */
+    private final Color NAV_BAR_COLOR = new Color(18, 18, 18);
+
+    /**
+     * Primary action color used for buttons and highlights.
+     */
+    private static final Color PRIMARY_BLUE = new Color(34, 150, 243);
 
     /**
      * Constructor for the WatchShowtimesPage.
