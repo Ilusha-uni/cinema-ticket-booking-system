@@ -2,6 +2,7 @@ package cinema.auth; // Package declaration
 
 /**
  * Manages the currently logged-in user's session.
+ *
  * Stores the user ID and provides methods to query and modify session state.
  */
 public class UserSession {
