@@ -12,9 +12,12 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
 /**
- * Provides a password change interface for existing users.
- * Validates current password and ensures new passwords match.
- * Updates password using {@link cinema.dao.UserDAO}.
+ * Provides a user interface for updating an existing user's password.
+ *
+ * It validates user input, enforces password rules, and updates the password
+ * through {@link cinema.dao.UserDAO}.
+ *
+ * The user must enter their current password for verification before a new password is accepted.
  */
 public class ChangePasswordForm extends JFrame {
 
@@ -30,33 +33,47 @@ public class ChangePasswordForm extends JFrame {
     /** The input field for the user's email address. */
     private JTextField emailField = new JTextField(25);
 
-    // Constant colors for a consistent UI theme
+    /**
+     * Font used for labels in the UI.
+     */
     private Font labelFont = new Font("Segoe UI", Font.BOLD, 16);
+
+    /**
+     * Font used for input fields in the UI.
+     */
     private Font fieldFont = new Font("Segoe UI", Font.PLAIN, 16);
 
     /**
      * Constructs the ChangePasswordForm GUI and initializes all components.
      */
     public ChangePasswordForm() {
+        setupWindow();
+        setupMainContent();
+    }
+
+    /**
+     * Configures the JFrame properties including title, close operation,
+     * and basic UI appearance.
+     */
+    private void setupWindow() {
         // Basic window configuration
         setTitle("Change Password");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         getContentPane().setBackground(Color.WHITE);
+    }
 
+    /**
+     * Builds and assembles the main UI layout for the password change form.
+     * Includes form inputs and the update button.
+     */
+    private void setupMainContent() {
         // mainContent: The primary container using BorderLayout for flexible spacing
         JPanel mainContent = new JPanel(new BorderLayout(15, 20));
         mainContent.setBackground(Color.WHITE);
         mainContent.setBorder(new EmptyBorder(25, 25, 25, 25)); // Internal padding
 
-        // formPanel: Uses GridLayout to stack labels and text fields vertically
-        JPanel formPanel = new JPanel(new GridLayout(8, 1, 5, 5));
-        formPanel.setBackground(Color.WHITE);
-
-        // Adding labeled input fields using a helper method to maintain clean code
-        addStyledField(formPanel, "Email:", emailField);
-        addStyledField(formPanel, "Current Password:", oldPasswordField);
-        addStyledField(formPanel, "New Password:", newPasswordField);
-        addStyledField(formPanel, "Confirm New Password:", confirmPasswordField);
+        // formPanel: Uses createFormPanel
+        JPanel formPanel = createFormPanel();
 
         // Action button for submitting the form
         JButton updateButton = new JButton("Update Password");
@@ -77,16 +94,30 @@ public class ChangePasswordForm extends JFrame {
     }
 
     /**
+     * Creates the form panel containing all input fields required for password change.
+     * This includes email, current password, new password, and confirm password fields.
+     */
+    private JPanel createFormPanel() {
+        JPanel formPanel = new JPanel(new GridLayout(8, 1, 5, 5));
+        formPanel.setBackground(Color.WHITE);
+
+        // Adding labeled input fields using a helper method to maintain clean code
+        addStyledField(formPanel, "Email:", emailField);
+        addStyledField(formPanel, "Current Password:", oldPasswordField);
+        addStyledField(formPanel, "New Password:", newPasswordField);
+        addStyledField(formPanel, "Confirm New Password:", confirmPasswordField);
+        return formPanel;
+    }
+
+    /**
      * Adds a label and text field to the specified panel, applying consistent styling.
      */
     private void addStyledField(JPanel panel, String labelText, JTextField field) {
         JLabel label = new JLabel(labelText);
         label.setFont(labelFont);
-
         field.setFont(fieldFont);
         // Specifically setting the height to 40px for a more modern, accessible feel
         field.setPreferredSize(new Dimension(field.getPreferredSize().width, 40));
-
         panel.add(label);
         panel.add(field);
     }
@@ -105,11 +136,16 @@ public class ChangePasswordForm extends JFrame {
     }
 
     /**
-     * Validates input and updates the password in the database.
-     * Shows messages for success, errors, or invalid input.
+     * Handles password update for an existing user.
+     *
+     * This method validates all input fields, ensures password rules are met,
+     * and updates the password in the database using {@link cinema.dao.UserDAO}.
+     *
+     * The user must provide their current password for verification before
+     * a new password can be set. Appropriate success or error messages are shown.
      */
     private void updatePassword() {
-        // Extracting data from fields
+        // Extract user input from form fields
         String email = emailField.getText().trim();
         String oldPass = new String(oldPasswordField.getPassword());
         String newPass = new String(newPasswordField.getPassword());
@@ -122,28 +158,31 @@ public class ChangePasswordForm extends JFrame {
             InputValidator.validateNonEmpty(newPass, "New Password");
             InputValidator.validateEmail(email, -1);
 
-            // Basic logic for security
+            // Enforce password rules
             if (newPass.length() < 6) {
                 throw new InvalidInputException("New password must be at least 6 characters long.");
             }
             if (!newPass.equals(confirmPass)) {
                 throw new InvalidInputException("New passwords do not match!");
             }
+            // DAO layer handles database update operation
             UserDAO userDAO = new UserDAO();
+            // Attempt to update password in database
             boolean passwordChangedSuccess = userDAO.changePassword(email, oldPass, newPass);
 
             if (passwordChangedSuccess) {
                 JOptionPane.showMessageDialog(this, "Password updated successfully!");
-                // Clean up and redirect user back to login
+                // Redirect user back to login screen after successful update
                 this.dispose();
                 new LoginForm().setVisible(true);
             } else {
                 JOptionPane.showMessageDialog(this, "Email or current password is incorrect.");
             }
         } catch (InvalidInputException ex) {
-            // Show custom error messages to the user
+            // Handle validation errors (user input mistakes)
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Input Error", JOptionPane.WARNING_MESSAGE);
         } catch (Exception ex) {
+            // Handle unexpected system or database errors
             JOptionPane.showMessageDialog(this, "Something went wrong. Please try again.");
         }
     }
