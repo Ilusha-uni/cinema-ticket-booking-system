@@ -17,7 +17,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * SeatSelectionPage represents the UI for users to view and select seats for a specific movie screening.
+ * Represents the UI for users to view and select seats for a specific movie screening.
+ *
  * - Displays a grid of seats for the selected hall and screening.
  * - Allows users to select/deselect seats.
  * - Navigates to BookingConfirmationPage with the selected seats.
