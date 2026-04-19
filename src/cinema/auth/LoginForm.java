@@ -3,7 +3,8 @@ package cinema.auth;
 
 // Import project-specific classes
 import cinema.booking.MovieListingPage;
-import cinema.database.DatabaseConnection;
+import cinema.dao.UserDAO;
+import cinema.models.User;
 import cinema.panels.AdminPanel;
 
 // Import necessary libraries for GUI (Swing/AWT) and Database (SQL)
@@ -11,38 +12,73 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
-import java.sql.*;
 
 /**
- * LoginForm class creates a graphical user interface for users to log into the cinema system.
- * It extends JFrame to create the main window.
+ * Provides a login interface for the cinema system.
+ * Users enter email and password to authenticate.
+ * Redirects users based on role to {@link cinema.booking.MovieListingPage} or {@link cinema.panels.AdminPanel}.
  */
 public class LoginForm extends JFrame {
 
-    // UI Components: Text fields for user input
+    /** Text field for user email. */
     private JTextField emailField = new JTextField(25);
+    /** Password field for user password. */
     private JPasswordField passwordField = new JPasswordField(25);
 
-    // Styling constants: Defined to ensure consistency across different forms
+    /**
+     * Font used for labels across forms.
+     */
     private Font labelFont = new Font("Segoe UI", Font.BOLD, 16);
+
+    /**
+     * Font used for input fields across forms.
+     */
     private Font fieldFont = new Font("Segoe UI", Font.PLAIN, 16);
 
+    /**
+     * Constructs the LoginForm window and initializes all UI components.
+     */
     public LoginForm() {
         setupWindow();
         setupMainContent();
     }
+
+    /**
+     * Configures the main JFrame properties such as title, close operation,
+     * and background color.
+     */
     private void setupWindow() {
         // Basic window setup
         setTitle("Login");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         getContentPane().setBackground(Color.WHITE);
     }
+
+    /**
+     * Builds and assembles the main UI layout by combining form, action,
+     * and navigation link panels into a single container.
+     */
     private void setupMainContent() {
         // Main container: Uses BorderLayout and adds padding (EmptyBorder)
         JPanel mainContent = new JPanel(new BorderLayout(15, 20));
         mainContent.setBackground(Color.WHITE);
         mainContent.setBorder(new EmptyBorder(25, 25, 25, 25));
 
+        mainContent.add(createFormPanel(), BorderLayout.NORTH);
+        mainContent.add(createActionPanel(), BorderLayout.CENTER);
+        mainContent.add(createLinksPanel(), BorderLayout.SOUTH);
+        // Add the assembled container to the JFrame
+        add(mainContent);
+        // Window finalization: size to fit, set minimum bounds, and center on screen
+        pack();
+        setMinimumSize(new Dimension(450, 450));
+        setLocationRelativeTo(null);
+    }
+
+    /**
+     * Creates the form section containing email and password input fields.
+     */
+    private JPanel createFormPanel() {
         // Form panel: Organized in a grid (4 rows, 1 column) for labels and fields
         JPanel formPanel = new JPanel(new GridLayout(4, 1, 5, 5));
         formPanel.setBackground(Color.WHITE);
@@ -50,7 +86,13 @@ public class LoginForm extends JFrame {
         // Add email and password inputs using the helper styling method
         addStyledField(formPanel, "Email:", emailField);
         addStyledField(formPanel, "Password:", passwordField);
+        return formPanel;
+    }
 
+    /**
+     * Creates the login button panel and attaches the authentication handler.
+     */
+    private JPanel createActionPanel() {
         // Login Button: Instantiated, styled, and linked to the login logic
         JButton loginButton = new JButton("Login");
         styleButton(loginButton);
@@ -60,11 +102,16 @@ public class LoginForm extends JFrame {
         loginButton.setPreferredSize(new Dimension(400, 40));
 
         // Button Panel: Uses GridBagLayout to keep the button centered
-        JPanel buttonPanel = new JPanel();
-        buttonPanel.setBackground(Color.WHITE);
-        buttonPanel.setLayout(new GridBagLayout());
-        buttonPanel.add(loginButton);
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setBackground(Color.WHITE);
+        panel.add(loginButton);
+        return panel;
+    }
 
+    /**
+     * Creates navigation links for password reset and user registration.
+     */
+    private JPanel createLinksPanel() {
         // Links Panel: Contains "Forgot Password" and "Register" labels
         JPanel linksPanel = new JPanel(new GridLayout(2, 1, 5, 5));
         linksPanel.setBackground(Color.WHITE);
@@ -84,30 +131,17 @@ public class LoginForm extends JFrame {
         styleLinkLabel(registerLabel);
         registerLabel.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
-                new RegistrationForm().setVisible(true); // Open registration window
-                dispose(); // Close current login window
+                new RegistrationForm().setVisible(true);
+                dispose();
             }
         });
-
         linksPanel.add(changePassLabel);
         linksPanel.add(registerLabel);
-
-        // Assemble all sub-panels into the main content container
-        mainContent.add(formPanel, BorderLayout.NORTH);
-        mainContent.add(buttonPanel, BorderLayout.CENTER);
-        mainContent.add(linksPanel, BorderLayout.SOUTH);
-
-        // Add the assembled container to the JFrame
-        add(mainContent);
-
-        // Window finalization: size to fit, set minimum bounds, and center on screen
-        pack();
-        setMinimumSize(new Dimension(450, 450));
-        setLocationRelativeTo(null);
+        return linksPanel;
     }
 
     /**
-     * Helper method to style and add labels/fields to a panel.
+     * Styles and adds a label and text field to a panel.
      */
     private void addStyledField(JPanel panel, String labelText, JTextField field) {
         JLabel label = new JLabel(labelText);
@@ -120,7 +154,7 @@ public class LoginForm extends JFrame {
     }
 
     /**
-     * Helper method to apply colors, fonts, and cursors to buttons.
+     * Styles a button with colors, font, cursor, and focus behavior.
      */
     private void styleButton(JButton btn) {
         btn.setFont(new Font("Segoe UI", Font.BOLD, 18));
@@ -134,7 +168,7 @@ public class LoginForm extends JFrame {
     }
 
     /**
-     * Helper method to make JLabels look like clickable hyperlinks.
+     * Styles a label to appear as a clickable hyperlink.
      */
     private void styleLinkLabel(JLabel label) {
         label.setForeground(Color.BLUE);
@@ -143,31 +177,32 @@ public class LoginForm extends JFrame {
     }
 
     /**
-     * Core logic for user authentication.
-     * Connects to the database and verifies credentials.
+     * Performs user authentication using email and password.
+     *
+     * This method validates the credentials through {@link cinema.dao.UserDAO}.
+     * If authentication is successful, the user session is created and the user
+     * is redirected to the main movie listing page.
+     *
+     * Admin users are additionally granted access to the admin panel.
      */
     private void loginUser() {
         String email = emailField.getText();
         String password = new String(passwordField.getPassword()); // Get password as String
 
-        // Use try-with-resources to ensure database connection closes automatically
-        try (Connection conn = DatabaseConnection.getConnection()) {
-            // Prepare a SQL query to prevent SQL Injection
-            String query = "SELECT * FROM users WHERE email = ? AND password = ?";
-            PreparedStatement pst = conn.prepareStatement(query);
-            pst.setString(1, email);
-            pst.setString(2, password);
+        try {
+            // Create DAO instance and attempt to authenticate user using provided credentials
+            UserDAO userDAO = new UserDAO();
+            User user = userDAO.loginUser(email, password);
 
-            ResultSet rs = pst.executeQuery();
+            if (user != null) {
+                // Store authenticated user in session for later access across the application
+                UserSession.setUserId(user.getId());
 
-            if (rs.next()) {
-                // If a record is found, store user info in a session
-                UserSession.setUserId(rs.getInt("id"));
-                String name = rs.getString("name");
-                String role = rs.getString("role");
+                // Extract data from the user object
+                String name = user.getName();
+                String role = user.getRole();
 
-                this.dispose(); //Dispose Login form and open appropriate windows based on role
-
+                this.dispose();
                 // Open main movie page for all users
                 new MovieListingPage().setVisible(true);
 
@@ -176,24 +211,22 @@ public class LoginForm extends JFrame {
                     // Open admin panel window
                     new AdminPanel().setVisible(true);
                     JOptionPane.showMessageDialog(this, "Welcome ADMIN, " + name + "!");
-                }
-                // If the user is NOT an admin
-                else {
+
+                } else { // If the user is NOT an admin
                     JOptionPane.showMessageDialog(this, "Welcome, " + name + "!");
                 }
-
             } else {
-                // Show error if login credentials are invalid
                 JOptionPane.showMessageDialog(this, "Invalid email or password!");
             }
-        } catch (SQLException ex) {
-            // Show error message if database connection or query fails
+        } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
         }
     }
 
     /**
-     * Entry point of the application.
+     * Application entry point.
+     *
+     * @param args command-line arguments
      */
     public static void main(String[] args) {
         // Run the GUI on the Event Dispatch Thread (EDT) for thread safety
