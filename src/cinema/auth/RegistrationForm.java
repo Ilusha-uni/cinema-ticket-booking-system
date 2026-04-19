@@ -29,28 +29,40 @@ public class RegistrationForm extends JFrame {
     /** Password field for confirming password. */
     private JPasswordField confirmPasswordField = new JPasswordField(25);
 
-    // Constant colors for a consistent UI theme
+    /**
+     * Font used for form labels in the UI.
+     */
     private Font labelFont = new Font("Segoe UI", Font.BOLD, 16);
+
+    /**
+     * Font used for input fields in the UI.
+     */
     private Font fieldFont = new Font("Segoe UI", Font.PLAIN, 16);
 
     /**
-     * Constructs the registration form, initializing UI components, styling, and layout.
+     * Constructs the RegistrationForm window and initializes all UI components.
      */
     public RegistrationForm() {
         setupWindow();
         setupMainContent();
     }
+
+    /**
+     * Configures the JFrame properties such as title, close operation,
+     * and background styling.
+     */
     private void setupWindow() {
         // Basic window setup
         setTitle("Register");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         getContentPane().setBackground(Color.WHITE);
 
-        // Window size that fits the screen, set minimum bounds, and center on screen
-        pack();
-        setMinimumSize(new Dimension(450, 600));
-        setLocationRelativeTo(null);
     }
+
+    /**
+     * Builds and assembles the main registration UI including form,
+     * button, and navigation link panels.
+     */
     private void setupMainContent() {
         // Main container: Uses BorderLayout and adds padding
         JPanel mainContent = new JPanel(new BorderLayout(15, 20));
@@ -61,9 +73,21 @@ public class RegistrationForm extends JFrame {
         mainContent.add(createFormPanel(), BorderLayout.NORTH);
         mainContent.add(createButtonPanel(), BorderLayout.CENTER);
         mainContent.add(createLinksPanel(), BorderLayout.SOUTH);
-
+        // Add the assembled container to the JFrame
         add(mainContent);
+
+        // Window size that fits the screen, set minimum bounds, and center on screen
+        pack();
+        setMinimumSize(new Dimension(450, 600));
+        setLocationRelativeTo(null);
     }
+
+    /**
+     * Creates the registration form panel containing input fields
+     * for email, full name, password, and confirm password.
+     *
+     * @return JPanel containing the styled form inputs
+     */
     private JPanel createFormPanel() {
         // Form panel: Organized in a grid (8 rows: 4 labels + 4 fields)
         JPanel formPanel = new JPanel(new GridLayout(8, 1, 5, 5));
@@ -76,6 +100,12 @@ public class RegistrationForm extends JFrame {
         addStyledField(formPanel, "Confirm Password:", confirmPasswordField);
         return formPanel;
     }
+
+    /**
+     * Creates the registration button panel and attaches the registration logic.
+     *
+     * @return JPanel containing the register button
+     */
     private JPanel createButtonPanel() {
         // Register Button
         JButton registerButton = new JButton("Register");
@@ -90,6 +120,12 @@ public class RegistrationForm extends JFrame {
 
         return panel;
     }
+
+    /**
+     * Creates navigation links for switching back to the login screen.
+     *
+     * @return JPanel containing login navigation link
+     */
     private JPanel createLinksPanel() {
         // Links Panel
         JPanel linksPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
@@ -144,8 +180,12 @@ public class RegistrationForm extends JFrame {
     }
 
     /**
-     * Performs user registration after validating inputs.
-     * Shows messages for success, failure, or input errors.
+     * Handles user registration process.
+     *
+     * Validates all input fields, checks for existing email,
+     * and registers the user through {@link cinema.dao.UserDAO}.
+     *
+     * Displays success or error messages based on the result.
      */
     private void registerUser() {
         String email = emailField.getText().trim();
@@ -164,25 +204,28 @@ public class RegistrationForm extends JFrame {
             if (password.length() < 6)
                 throw new InvalidInputException("Password must be at least 6 characters long.");
 
+            // DAO responsible for database operations
             UserDAO userDAO = new UserDAO();
 
+            // Check if email already exists in the database
             if (userDAO.emailExists(email)) {
                 JOptionPane.showMessageDialog(this, "Email already exists!");
                 return;
             }
-
+            // Attempt to register user in database
             boolean registrationSuccess = userDAO.registerUser(email, password, fullName);
+
             if (registrationSuccess) {
                 JOptionPane.showMessageDialog(this, "Registration Successful!");
-                // Redirect to Login
+                // Redirect to Login page
                 new LoginForm().setVisible(true);
                 this.dispose();
             } else {
                 JOptionPane.showMessageDialog(this, "Registration failed.");
             }
-        } catch (InvalidInputException ex) {
+        } catch (InvalidInputException ex) { // Handle validation-related errors
             JOptionPane.showMessageDialog(this, ex.getMessage());
-        } catch (Exception ex) {
+        } catch (Exception ex) {// Handle unexpected system/database errors
             JOptionPane.showMessageDialog(this, "Something went wrong. Please try again.");
         }
     }
