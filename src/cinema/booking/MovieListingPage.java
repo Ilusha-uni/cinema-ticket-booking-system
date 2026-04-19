@@ -14,9 +14,8 @@ import java.awt.*;
 import java.util.List;
 
 /**
- * MovieListingPage Class
- *
  * Represents the main dashboard where users can view available movies.
+ *
  * Responsibilities:
  * - Display a list of movies retrieved from the database.
  * - Provide a top navigation bar with a logout button.
@@ -24,13 +23,25 @@ import java.util.List;
  */
 public class MovieListingPage extends JFrame {
 
-    // Panel that holds the list of movie cards
+    /**
+     * Holds the list of movie cards displayed in the UI.
+     */
     private JPanel moviePanel;
 
-    // Constant colors for a consistent UI theme
-    private static final Color NAV_BAR_COLOR = new Color(18, 18, 18); // Dark top navigation bar
-    private static final Color PRIMARY_BLUE = new Color(34, 150, 243); // Primary button color
-    private final Color BACKGROUND_COLOR = new Color(240, 240, 240); // Background color for main content
+    /**
+     * Dark color used for the top navigation bar.
+     */
+    private static final Color NAV_BAR_COLOR = new Color(18, 18, 18);
+
+    /**
+     * Primary blue color used for buttons and highlights.
+     */
+    private static final Color PRIMARY_BLUE = new Color(34, 150, 243);
+
+    /**
+     * Background color for the main content area.
+     */
+    private final Color BACKGROUND_COLOR = new Color(240, 240, 240);
 
     /**
      * Constructor for MovieListingPage.
