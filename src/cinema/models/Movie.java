@@ -2,12 +2,10 @@
 package cinema.models;
 
 /**
- * Represents a movie entity with all its attributes.
+ * Represents a movie with its associated attributes.
  * Contains details like title, description, duration, rating, release date, and poster image path.
  */
 public class Movie {
-
-    // Fields
 
     /** Unique identifier for the movie */
     private int id;
@@ -30,12 +28,10 @@ public class Movie {
     /** File path or URL pointing to the movie poster image */
     private String imagePath;
 
-    // Constructor
-
     /**
      * Constructs a new Movie object with all attributes initialized.
      *
-     * @param id Unique identifier for the movie
+     * @param id Unique identifier of the movie
      * @param title Title of the movie
      * @param description Short description or synopsis
      * @param duration Duration in minutes
@@ -53,7 +49,6 @@ public class Movie {
         this.imagePath = imagePath;
     }
 
-    // Getters
 
     /** @return the unique movie ID */
     public int getId() { return id; }
@@ -75,8 +70,6 @@ public class Movie {
 
     /** @return the poster image path or URL */
     public String getImagePath() { return imagePath; }
-
-    // Setters
 
     /**
      * Updates the poster image path or URL.
