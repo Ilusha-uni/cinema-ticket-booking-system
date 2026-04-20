@@ -15,7 +15,7 @@ import java.util.List;
 
 
 /**
- * BookingConfirmationPage represents the final step in the cinema ticket booking process.
+ * Represents the final step in the cinema ticket booking process.
  *
  * Responsibilities:
  * 1. Displays selected movie details: poster, title, showtime, hall, and selected seats.
@@ -190,33 +190,34 @@ public class BookingConfirmationPage extends JFrame {
      * Validates user session, checks for double-booking, and inserts records into DB
      */
     private void confirmBooking() {
-        // Ensure the user is logged in before allowing any booking.
+        // Check if the user is logged in
         if (!UserSession.isLoggedIn()) {
             JOptionPane.showMessageDialog(this, "Please log in to continue.");
-            return; // Exit method if user is not authenticated
+            return;  // Exit method if user is not logged in
         }
 
-        // Ask the user to confirm payment; returns YES or NO
+        // Ask user to confirm payment via a dialog box
         int choice = JOptionPane.showConfirmDialog(this, "Confirm payment?", "Payment", JOptionPane.YES_NO_OPTION);
-        if (choice != JOptionPane.YES_OPTION) return; // User declined, cancel booking
+        if (choice != JOptionPane.YES_OPTION) return;  // Exit method if user cancels payment
 
-        // BookingDAO handles all database interactions related to ticket bookings
+        // Create an instance of BookingDAO to interact with the database
         BookingDAO bookingDAO = new BookingDAO();
 
-        // Prevents race conditions where another user might have booked a seat
+        // Check if the selected seats are already booked by someone else
         if (bookingDAO.areSeatsBooked(showtime.getId(), selectedSeatIds)) {
             JOptionPane.showMessageDialog(this, "One of your seats was just taken!");
-            return;
+            return;  // Exit method if any selected seat is already booked
         }
-        // Inserts booking records into the database for all selected seats
+
+        // If seats are available, attempt to book them for the user
         boolean booked = bookingDAO.bookSeats(UserSession.getUserId(), showtime.getId(), selectedSeatIds);
         if (booked) {
-            // Booking successful
+            // Booking was successful, show confirmation message and redirect to movie listing
             JOptionPane.showMessageDialog(this, "Booking Confirmed! Enjoy your movie!");
-            this.dispose(); // Close the confirmation page(this window)
-            new MovieListingPage().setVisible(true); // Redirect to movie listing
+            this.dispose();  // Close the current confirmation page
+            new MovieListingPage().setVisible(true);  // Open the movie listing page
         } else {
-            // Booking failed
+            // If booking failed, show an error message
             JOptionPane.showMessageDialog(this, "Booking failed. Please try again.", "Booking Error", JOptionPane.ERROR_MESSAGE);
         }
     }
