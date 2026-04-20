@@ -9,8 +9,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * UserDAO handles all database operations related to users.
- * Includes login, registration, password management, and email existence checks.
+ * Handles all database operations related to users.
+ * Includes login, registration, password management, email existence checks
+ * and CRUD operations for UsersPanel.
  */
 public class UserDAO {
 
@@ -72,8 +73,7 @@ public class UserDAO {
             return true;
 
         } catch (SQLException e) {
-            // Optional: handle duplicate email or other SQL constraints
-            System.out.println("Register error: " + e.getMessage());
+            e.printStackTrace();
             return false;
         }
     }
@@ -171,20 +171,14 @@ public class UserDAO {
     }
 
     /**
-     * Inserts a new user or updates an existing user in the database.
+     * Inserts a new user into the database.
      *
-     * @param id The user's ID (used only for updating)
-     * @param name Full name of the user
-     * @param email Email address of the user
-     * @param pass Password of the user
-     * @param role Role of the user (e.g., "USER", "ADMIN")
-     * @param isEdit True to update an existing user, false to add a new user
-     * @return True if the operation was successful, false otherwise
+     * @return true if insertion was successful, false otherwise
      */
-    public boolean saveUser(int id, String name, String email, String pass, String role, boolean isEdit) {
-        String sql = isEdit ?
-                "UPDATE users SET name=?, email=?, password=?, role=? WHERE id=?" :
-                "INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)";
+    public boolean addUser(String name, String email, String pass, String role) {
+
+        // SQL insert query
+        String sql = "INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pst = conn.prepareStatement(sql)) {
@@ -193,13 +187,40 @@ public class UserDAO {
             pst.setString(2, email);
             pst.setString(3, pass);
             pst.setString(4, role);
-            if (isEdit) pst.setInt(5, id);
 
-            pst.executeUpdate();
+            pst.executeUpdate(); // Execute insert
             return true;
 
         } catch (SQLException e) {
-            e.printStackTrace(); // Log SQL errors
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * Updates an existing user in the database.
+     *
+     * @return true if update was successful, false otherwise
+     */
+    public boolean updateUser(int id, String name, String email, String pass, String role) {
+
+        // SQL update query
+        String sql = "UPDATE users SET name=?, email=?, password=?, role=? WHERE id=?";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pst = conn.prepareStatement(sql)) {
+
+            pst.setString(1, name);
+            pst.setString(2, email);
+            pst.setString(3, pass);
+            pst.setString(4, role);
+            pst.setInt(5, id);
+
+            pst.executeUpdate(); // Execute update
+            return true;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
             return false;
         }
     }
