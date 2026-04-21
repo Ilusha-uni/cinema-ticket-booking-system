@@ -129,13 +129,13 @@ public class SeatSelectionPage extends JFrame {
     }
 
     /**
-     * Sets up the bottom panel containing the "Go to Confirmation" button.
+     * Sets up the bottom panel containing the "Continue to Confirmation" button.
      * Clicking this button collects selected seats and redirects to BookingConfirmationPage.
      */
     private void setupBottomPanel() {
         // --- 3. BOTTOM PANEL: Actions ---
         // Create the "Go to Confirmation" button to finalize selection
-        JButton confirmBtn = new JButton("Go to Confirmation");
+        JButton confirmBtn = new JButton("Continue to Confirmation");
         confirmBtn.setBackground(PRIMARY_BLUE);
         confirmBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         confirmBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
@@ -146,6 +146,7 @@ public class SeatSelectionPage extends JFrame {
         confirmBtn.addActionListener(e -> redirectToConfirmationPage());
 
         JPanel bottomPanel = new JPanel();
+        bottomPanel.setBackground(Color.WHITE);
         bottomPanel.add(confirmBtn);
         add(bottomPanel, BorderLayout.SOUTH);
     }
@@ -176,7 +177,7 @@ public class SeatSelectionPage extends JFrame {
 
             // Toggle selection color when clicked (Green <-> Yellow)
             btn.addActionListener(e -> {
-                if (btn.getBackground() == Color.GREEN) {
+                if (Color.GREEN.equals(btn.getBackground())) {
                     btn.setBackground(Color.YELLOW);
                 } else {
                     btn.setBackground(Color.GREEN);
@@ -199,7 +200,7 @@ public class SeatSelectionPage extends JFrame {
 
         // Identify which buttons the user highlighted in yellow
         for (JButton btn : seatButtons) {
-            if (btn.getBackground() == Color.YELLOW) {
+            if (Color.YELLOW.equals(btn.getBackground())) {
                 Seat seat = (Seat) btn.getClientProperty("seatData");
                 selectedNames.add("Row " + seat.getRowNumber() + " Seat " + seat.getSeatNumber());
                 selectedIds.add(seat.getId());
