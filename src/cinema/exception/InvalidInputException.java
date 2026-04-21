@@ -2,8 +2,7 @@
 package cinema.exception;
 
 /**
- * InvalidInputException is a custom checked exception used for signaling
- * that user input failed validation checks.
+ * Represents a custom checked exception thrown when user input fails validation.
  * Thrown by the InputValidator utility class when an input does not meet
  * the expected format, type, or constraints.
  */
