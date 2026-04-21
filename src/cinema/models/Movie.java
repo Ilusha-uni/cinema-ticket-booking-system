@@ -7,6 +7,8 @@ package cinema.models;
  */
 public class Movie {
 
+    // Fields
+
     /** Unique identifier for the movie */
     private int id;
 
