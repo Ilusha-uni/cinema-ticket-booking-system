@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * SeatDAO handles all database operations related to seats.
+ * Handles all database operations related to seats.
  * It allows fetching seats for a specific hall and screening,
  * including their availability status.
  */
