@@ -79,7 +79,7 @@ public class BookingConfirmationPage extends JFrame {
      */
     private void setupWindow() {
         // Window basic configuration
-        setTitle("Confirm Booking");
+        setTitle("Review & Confirm");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1300, 800);
         setLocationRelativeTo(null);
@@ -125,7 +125,7 @@ public class BookingConfirmationPage extends JFrame {
 
         // --- Confirm Button ---
         // Final action button to trigger the payment/booking logic
-        JButton confirmBtn = new JButton("Confirm & Pay Now");
+        JButton confirmBtn = new JButton("Complete Booking");
         confirmBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
         confirmBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
         confirmBtn.setBackground(new Color(46, 204, 113)); // Success Green
@@ -145,8 +145,12 @@ public class BookingConfirmationPage extends JFrame {
         content.add(Box.createVerticalStrut(25));
         content.add(confirmBtn);
 
-        // Add content to frame inside a scroll pane (in case screen is small)
-        add(new JScrollPane(content), BorderLayout.CENTER);
+        JScrollPane scrollPane = new JScrollPane(content);
+        scrollPane.setBorder(null);                 // remove outer border
+        scrollPane.setViewportBorder(null);         // remove inner border
+        scrollPane.getViewport().setBackground(Color.WHITE); // match content bg
+
+        add(scrollPane, BorderLayout.CENTER);
     }
 
     /**
