@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * MovieDAO handles all database operations related to the Movie entity.
+ * Handles database operations related to movies.
  * It allows fetching a single movie by ID or retrieving all movies.
  */
 public class MovieDAO {
