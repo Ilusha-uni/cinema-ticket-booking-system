@@ -66,7 +66,7 @@ public class WatchShowtimesPage extends JFrame {
      * Configures the main JFrame window.
      */
     private void setupWindow() {
-        setTitle("Movie Showtimes");
+        setTitle("View Showtimes");
         setSize(1300, 800);                // Fixed window size
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);       // Center on screen
@@ -134,8 +134,11 @@ public class WatchShowtimesPage extends JFrame {
             }
         }
 
-        // Wrap main content in a scroll pane for long lists of showtimes
-        add(new JScrollPane(mainContent), BorderLayout.CENTER);
+        JScrollPane scrollPane = new JScrollPane(mainContent);
+        scrollPane.setBorder(null); // removes outer border
+        scrollPane.getViewport().setBackground(BACKGROUND_COLOR); // match background
+
+        add(scrollPane, BorderLayout.CENTER);
     }
 
     /**
