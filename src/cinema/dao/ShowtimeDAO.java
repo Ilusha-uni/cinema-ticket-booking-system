@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * ShowtimeDAO handles all database operations related to movie screenings.
+ * Handles database operations related to movie showtimes.
  * Provides methods to fetch showtimes by movie or by screening ID.
  */
 public class ShowtimeDAO {
