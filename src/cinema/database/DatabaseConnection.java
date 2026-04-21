@@ -15,7 +15,7 @@ public class DatabaseConnection {
     // Database connection parameters
     private static final String URL = "jdbc:mysql://localhost:3306/cinema_db";
     private static final String USER = "cinemadb";
-    private static final String PASSWORD = "8VkAm@fb5T_n:i.!5cxZa$-qEF-745t+1sBVsq-Sc!Gh$@";
+    private static final String PASSWORD = "yourdbpassword";
 
     /**
      * Establishes and returns a connection to the database.
