@@ -85,7 +85,7 @@ A desktop application built with **Java Swing** and **MySQL** that provides a se
 
    ```java
    private static final String URL = "jdbc:mysql://localhost:3306/cinema_db";
-   private static final String USER = "your_username";
+   private static final String USER = "cinema_db";
    private static final String PASS = "your_password";
    ```
 
