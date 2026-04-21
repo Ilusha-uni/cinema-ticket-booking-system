@@ -57,7 +57,7 @@ public class MovieListingPage extends JFrame {
      * Configures the basic JFrame properties: title, size, close operation, and background.
      */
     private void setupWindow() {
-        setTitle("Movie Listings");
+        setTitle("Movies");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1300, 800);                // Initial window dimensions
         setLocationRelativeTo(null);       // Center window on the screen
