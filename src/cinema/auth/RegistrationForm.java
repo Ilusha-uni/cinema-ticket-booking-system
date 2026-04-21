@@ -53,7 +53,7 @@ public class RegistrationForm extends JFrame {
      */
     private void setupWindow() {
         // Basic window setup
-        setTitle("Register");
+        setTitle("Registration");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         getContentPane().setBackground(Color.WHITE);
 
