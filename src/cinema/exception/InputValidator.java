@@ -7,8 +7,7 @@ import java.util.Date;
 import java.sql.*;
 
 /**
- * InputValidator is a utility class that provides static methods to validate
- * user input for fields such as email, full name, role, numeric values, and dates.
+ * Provides static methods for validating user input such as email, full name, role, numeric values, and dates.
  * Throws InvalidInputException if validation fails.
  */
 public class InputValidator {
@@ -86,7 +85,7 @@ public class InputValidator {
      * Validates if a string is a positive integer.
      *
      * @param input the string to parse
-     * @throws InvalidInputException if parsing fails or number is <= 0
+     * @throws InvalidInputException if parsing fails or number is less than or equal to 0
      */
     public static void validatePositiveInteger(String input) throws InvalidInputException {
         try {
