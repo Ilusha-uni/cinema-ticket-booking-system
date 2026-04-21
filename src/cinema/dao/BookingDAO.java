@@ -9,7 +9,7 @@ import java.sql.ResultSet;
 import java.util.List;
 
 /**
- * BookingDAO handles all database operations related to ticket bookings.
+ * Handles all database operations related to ticket bookings.
  * It provides methods to check seat availability and to insert new bookings.
  */
 public class BookingDAO {
