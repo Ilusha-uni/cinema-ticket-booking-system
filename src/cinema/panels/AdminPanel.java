@@ -6,7 +6,7 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
- * AdminPanel represents the main window for cinema administrators.
+ * Represents the main window for cinema administrators.
  * It contains tabs for managing various parts of the system (e.g., Users, Movies, Showtimes).
  */
 public class AdminPanel extends JFrame {
